@@ -1,0 +1,22 @@
+/* Manrope is self-hosted and imported from main.tsx through
+   @fontsource, so the interface font needs no network request.
+
+   ── Opulent ──────────────────────────────────────────────────
+   The Opulent asset has not been supplied, so no family by that
+   name is registered. --font-opulent in tokens.css therefore
+   resolves to nothing and --font-display falls through to its
+   editorial serif fallback. Selective display headings already
+   use `font-display`, which means dropping the real file in
+   here switches every brand moment over with no code changes.
+
+   To activate it, place the file at src/assets/fonts/Opulent.woff2
+   and uncomment:
+
+   @font-face {
+     font-family: 'Opulent';
+     src: url('../assets/fonts/Opulent.woff2') format('woff2-variations');
+     font-weight: 100 900;
+     font-style: normal;
+     font-display: swap;
+   }
+*/

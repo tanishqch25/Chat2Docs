@@ -1,0 +1,264 @@
+/**
+ * The editing surface.
+ *
+ * Deliberately a separate file from `export.css`, and deliberately not
+ * shared with it: that sheet is typeset for a page, with margins, a footer
+ * and a print stylesheet, while this is a text field whose every measurement
+ * has to serve a cursor. What they do have in common is the vocabulary —
+ * `pp-` prefixes, the same tokens, the same editorial tone — and the rule
+ * that the words themselves are never decorated away: what changes here is
+ * only the space a caret needs.
+ *
+ * Named list styles and explicit margins are repeated because Tailwind's
+ * preflight takes both away site-wide, and a bulleted list that renders as
+ * a wall of text in the editor is a list the user will go back and retype.
+ */
+
+.pp-editor-prose {
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+.pp-editor-prose > * + * {
+  margin-top: 14px;
+}
+
+.pp-editor-prose p,
+.pp-editor-prose ul,
+.pp-editor-prose ol,
+.pp-editor-prose blockquote,
+.pp-editor-prose pre,
+.pp-editor-prose table {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.pp-editor-prose :is(p, li, blockquote) {
+  white-space: pre-wrap;
+}
+
+.pp-editor-prose :is(h1, h2, h3, h4, h5, h6) {
+  margin: 22px 0 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.pp-editor-prose h1 {
+  font-size: 1.5em;
+}
+
+.pp-editor-prose h2 {
+  font-size: 1.3em;
+}
+
+.pp-editor-prose h3 {
+  font-size: 1.15em;
+}
+
+.pp-editor-prose :is(h4, h5, h6) {
+  font-size: 1em;
+}
+
+.pp-editor-prose ul {
+  padding-left: 26px;
+  list-style: disc;
+}
+
+.pp-editor-prose ol {
+  padding-left: 26px;
+  list-style: decimal;
+}
+
+.pp-editor-prose li + li,
+.pp-editor-prose li > p + p {
+  margin-top: 6px;
+}
+
+.pp-editor-prose blockquote {
+  padding-left: 16px;
+  border-left: 3px solid var(--color-signal-blue);
+  color: var(--color-slate-gray);
+}
+
+.pp-editor-prose pre {
+  padding: 14px 16px;
+  overflow-x: auto;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+  background: var(--color-pebble);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  line-height: 1.55;
+  tab-size: 4;
+}
+
+.pp-editor-prose code:not(pre > code) {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-badge-bg);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.pp-editor-prose a {
+  color: var(--color-signal-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.pp-editor-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94em;
+  table-layout: fixed;
+}
+
+.pp-editor-prose :is(th, td) {
+  padding: 7px 10px;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-paper);
+  text-align: left;
+  vertical-align: top;
+}
+
+.pp-editor-prose th {
+  background: var(--color-pebble);
+  font-weight: 700;
+}
+
+.pp-editor-prose :is(th, td) p {
+  margin: 0;
+}
+
+.pp-editor-prose .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--color-signal-blue) 12%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+/* A turn with nothing in it yet still needs a surface to click into: the
+   paragraph itself has no height until there are words in it. */
+.pp-editor-prose {
+  min-height: 28px;
+}
+
+
+/* ── Protected cards ─────────────────────────────────────────────── */
+
+.pp-editor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-hairline);
+  border-radius: var(--radius-input);
+  background: var(--color-pebble);
+}
+
+.pp-editor-card.ProseMirror-selectednode {
+  border-style: solid;
+  border-color: var(--color-signal-blue);
+}
+
+.pp-editor-card-figure {
+  margin: 0;
+}
+
+.pp-editor-card-figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-input);
+}
+
+.pp-editor-card-title {
+  color: var(--color-ink-navy);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pp-editor-card-note {
+  color: var(--color-slate-gray);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+
+/* ── Math ────────────────────────────────────────────────────────── */
+
+.pp-editor-math {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+  background: var(--color-paper);
+}
+
+.pp-editor-math.ProseMirror-selectednode {
+  border-color: var(--color-signal-blue);
+}
+
+.pp-editor-math-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pp-editor-math-label {
+  color: var(--color-ink-navy);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pp-editor-math-hint {
+  color: var(--color-slate-gray);
+  font-size: var(--text-caption);
+}
+
+.pp-editor-math-source {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-input);
+  background: var(--color-input);
+  color: var(--color-ink-navy);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.pp-editor-math-source:focus-visible {
+  border-color: var(--color-signal-blue);
+  outline: none;
+}
+
+.pp-editor-math-render {
+  padding: 4px 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--color-ink-navy);
+}
+
+.pp-editor-math-render .katex-display {
+  margin: 4px 0;
+}
+
+/* An inline expression is a line of the paragraph, not a block of its own. */
+.pp-editor-math[data-display='false'] .pp-editor-math-render .katex-display {
+  display: inline-block;
+  margin: 0;
+  text-align: left;
+}
+
+.pp-editor-math-render .katex-error {
+  color: var(--color-coral-magenta);
+}

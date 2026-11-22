@@ -1,0 +1,2 @@
+import{i as e}from"./export-page-CnpmGWyB.js";var t=`pp-print-page-rule`;function n(t){return[e[t.pageSize],`@media print { .pp-document-sheet { zoom: 1 !important; } }`].join(`
+`)}function r(e){let r=document.getElementById(t);r&&r.remove();let i=document.createElement(`style`);i.id=t,i.textContent=n(e),document.head.appendChild(i);let a=()=>{i.remove(),window.removeEventListener(`afterprint`,a)};window.addEventListener(`afterprint`,a),window.print(),window.setTimeout(a,0)}export{r as printDocument};

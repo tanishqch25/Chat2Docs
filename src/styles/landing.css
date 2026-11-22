@@ -1,0 +1,2607 @@
+/* ─────────────────────────────────────────────────────────────
+   Landing page format, adopted from the supplied App.tsx /
+   styles.css reference and reworded for PromptPaper.
+
+   Three deliberate departures from the reference file:
+
+   1. Every rule is scoped under `.pp-landing`. This sheet is in
+      the same bundle as the Tailwind build that styles
+      `/documents`, and unscoped rules like `.footer`, `.brand`
+      or `.line` would reach into that workspace.
+   2. The reference drew its own pixel band — `.pixel-art`,
+      clipped to 245 px at the top of the hero, with per-pixel
+      hover. PromptPaper lights one shared full-page GridPulse
+      layer instead, so that whole block is gone and the bands
+      below are translucent wherever the grid has to show
+      through them.
+   3. The fonts are self-hosted through @fontsource rather than
+      fetched from Google, matching how Manrope already arrives.
+   ───────────────────────────────────────────────────────────── */
+
+.pp-landing {
+  --navy: #0b3558;
+  --blue: #006bff;
+  --slate: #476788;
+  --mist: #f0f3f8;
+  --line: #e5eaf1;
+  --sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Manrope', 'DM Sans', sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  font-family: var(--sans);
+  color: var(--navy);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  /* No page background: the body paints Cloud and the shared
+     GridPulse layer sits between the two, so a background here
+     would bury the grid. */
+}
+
+/* `:where()` keeps these at element specificity. Written plainly,
+   `.pp-landing a` would outrank `.nav-cta`, `.sign-in` and the rest,
+   and the CTA would paint navy text on a navy pill. The reference
+   could use a bare `a` because it owned the whole document; a scoped
+   sheet has to stay as humble as the selector it replaces. */
+:where(.pp-landing) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:where(.pp-landing) button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Anchored sections stop below the sticky bar because of the one
+   scroll-padding-top on `html` in index.css. A scroll-margin here as
+   well would stack a second offset on top of it — measured, the pair
+   left every section 86 px lower than the bar it was meant to clear. */
+
+/* ── Topbar ─────────────────────────────────────────────────── */
+
+.topbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(248, 249, 251, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(229, 234, 241, 0.8);
+}
+
+.topbar {
+  height: 70px;
+  max-width: 1440px;
+  padding: 0 6.7%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font: 800 17px var(--display);
+  letter-spacing: -0.8px;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.brand-mark,
+.pill-mark {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  transform: rotate(-9deg);
+}
+
+.brand-mark span,
+.pill-mark span {
+  background: var(--blue);
+  border-radius: 2px;
+}
+
+.brand-mark span:nth-child(2),
+.pill-mark span:nth-child(2) {
+  opacity: 0.58;
+}
+
+.brand-mark span:nth-child(3),
+.pill-mark span:nth-child(3) {
+  opacity: 0.76;
+}
+
+.nav-links {
+  display: flex;
+  gap: 35px;
+  margin-left: 75px;
+  font-size: 12px;
+  color: #526b83;
+}
+
+.nav-links a,
+.sign-in,
+.footer nav a {
+  transition: color 0.2s;
+}
+
+.nav-links a:hover,
+.sign-in:hover,
+.footer nav a:hover {
+  color: var(--blue);
+}
+
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+}
+
+.sign-in {
+  color: #526b83;
+}
+
+.nav-cta {
+  padding: 11px 15px;
+  background: var(--navy);
+  color: white;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.nav-cta:hover,
+.button-primary:hover {
+  background: #07518a;
+  transform: translateY(-2px);
+}
+
+.menu-toggle {
+  display: none;
+  border: 0;
+  background: none;
+}
+
+/* ── Hero ───────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  max-width: 1440px;
+  min-height: 690px;
+  margin: 0 auto;
+  padding: 103px 6.7% 78px;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  align-items: center;
+}
+
+/* The reference's caption rode inside the pixel band. The band is
+   gone, so it opens the copy column instead and the grid behind
+   stays the atmosphere it was describing. */
+.hero-caption {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font: 9px var(--mono);
+  letter-spacing: 1px;
+  color: #7890a8;
+  text-transform: uppercase;
+}
+
+.live-dot,
+.meta-dot {
+  width: 6px;
+  height: 6px;
+  background: #36bf9a;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(54, 191, 154, 0.1);
+}
+
+.meta-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.hero-copy,
+.hero-product,
+.scroll-cue {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-copy {
+  align-self: center;
+  margin-top: 32px;
+}
+
+.eyebrow,
+.tiny-label {
+  font: 9px var(--mono);
+  letter-spacing: 1.25px;
+  color: #7890a8;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.eyebrow-line {
+  width: 24px;
+  height: 1px;
+  background: #a8c2dc;
+}
+
+.hero h1,
+.section-heading h2,
+.feature-copy h2,
+.preview-header h2,
+.closing h2,
+.reviews-head h2 {
+  font: 700 clamp(42px, 5vw, 69px) / 1.1 var(--display);
+  letter-spacing: -3.7px;
+  margin: 0;
+  color: #0b3558;
+}
+
+.hero h1 em,
+.section-heading h2 em,
+.feature-copy h2 em,
+.preview-header h2 em,
+.closing h2 em,
+.reviews-head h2 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -2.7px;
+  color: #476788;
+}
+
+.hero-description {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #5a7188;
+  max-width: 440px;
+  margin: 23px 0;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 19px;
+  border-radius: 999px;
+  background: #006bff;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(0, 107, 255, 0.16);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: #476788;
+  transition: color 0.2s;
+}
+
+.button-secondary:hover {
+  color: var(--blue);
+}
+
+.play-icon {
+  width: 23px;
+  height: 23px;
+  border: 1px solid #cdd9e5;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 31px;
+  font-size: 10px;
+  color: #8092a4;
+}
+
+.hero-meta > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-divider {
+  height: 12px;
+  width: 1px;
+  background: #d7e0e9;
+}
+
+.hero-product {
+  justify-self: end;
+  width: min(100%, 480px);
+  margin-top: 35px;
+}
+
+.product-card {
+  position: relative;
+  z-index: 1;
+  background: white;
+  border: 1px solid #e5eaf1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 26px 65px rgba(11, 53, 88, 0.12),
+    0 4px 10px rgba(11, 53, 88, 0.04);
+  transform: rotate(1.1deg);
+  transition: transform 0.45s, box-shadow 0.4s;
+}
+
+.product-card:hover {
+  transform: rotate(0) translateY(-5px);
+  box-shadow:
+    0 30px 70px rgba(11, 53, 88, 0.16),
+    0 4px 10px rgba(11, 53, 88, 0.04);
+}
+
+.card-top {
+  height: 41px;
+  border-bottom: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  gap: 12px;
+  color: #8a9bac;
+}
+
+.window-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.window-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d5dee7;
+}
+
+.window-dots i:first-child {
+  background: #6cb9ff;
+}
+
+.card-label {
+  font: 8px var(--mono);
+  letter-spacing: 0.8px;
+  margin-right: auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  min-height: 285px;
+}
+
+.mini-sidebar {
+  background: #fafbfd;
+  border-right: 1px solid #eef1f5;
+  padding: 13px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 8px;
+  color: #8798a9;
+}
+
+.brand-small {
+  font-size: 10px;
+  gap: 5px;
+  letter-spacing: -0.4px;
+}
+
+.brand-small .brand-mark {
+  width: 12px;
+  height: 12px;
+  gap: 1px;
+}
+
+.mini-sidebar > span:not(.brand) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 6px;
+  border-radius: 4px;
+}
+
+.mini-sidebar .side-active {
+  color: #1765b9;
+  background: #edf5ff;
+}
+
+.side-bottom {
+  margin-top: auto;
+  border-top: 1px solid #edf0f4;
+  padding: 12px 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 8px;
+}
+
+/* The reference put a person here. PromptPaper has no account, so
+   the same slot reports where the work actually lives. */
+.vault-mark {
+  width: 19px;
+  height: 19px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #eaf3ff;
+  color: #2f7cc0;
+}
+
+.vault-mark svg {
+  width: 11px;
+  height: 11px;
+}
+
+.mini-main {
+  padding: 16px 18px 14px;
+}
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+  color: #90a0af;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid #e8edf2;
+  border-radius: 999px;
+  background: white;
+  font-size: 9px;
+  font-weight: 600;
+  color: #50677d;
+  white-space: nowrap;
+}
+
+.source-badge i {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.source-badge.chatgpt i {
+  color: #16a47e;
+}
+
+.source-badge.gemini i {
+  color: #6275ea;
+}
+
+.source-badge.claude i {
+  color: #d8875d;
+}
+
+.status {
+  margin-left: auto;
+  color: #22916f;
+  background: #eaf8f3;
+  border-radius: 99px;
+  padding: 4px 7px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.document-sheet {
+  margin: 17px auto 0;
+  background: white;
+  max-width: 264px;
+  min-height: 215px;
+  padding: 19px 23px;
+  border: 1px solid #f0f2f5;
+  box-shadow: 0 4px 14px rgba(11, 53, 88, 0.04);
+}
+
+.sheet-kicker,
+.paper-topline {
+  font: 7px var(--mono);
+  letter-spacing: 1px;
+  color: #8ca0b1;
+}
+
+.document-sheet h3 {
+  font: 700 19px / 1.27 var(--display);
+  letter-spacing: -0.8px;
+  color: #183c5b;
+  margin: 9px 0 5px;
+}
+
+.sheet-sub {
+  font-size: 8px;
+  color: #90a0ad;
+  margin: 0;
+}
+
+.sheet-rule,
+.paper-rule {
+  height: 1px;
+  background: #e9edf2;
+  margin: 14px 0;
+}
+
+.sheet-section {
+  display: flex;
+  gap: 9px;
+  margin: 10px 0;
+  color: #91a1b0;
+}
+
+.sheet-section > b {
+  font: 8px var(--mono);
+  color: #4785c6;
+  padding-top: 1px;
+}
+
+.sheet-section strong {
+  font-size: 8px;
+  color: #254966;
+}
+
+.sheet-section p {
+  font-size: 7px;
+  line-height: 1.5;
+  margin: 3px 0 0;
+  color: #75889a;
+}
+
+.faded {
+  opacity: 0.66;
+}
+
+.line {
+  display: block;
+  height: 4px;
+  background: #e9eef3;
+  border-radius: 3px;
+  margin-top: 5px;
+}
+
+.w70 {
+  width: 70%;
+}
+
+.w50 {
+  width: 50%;
+}
+
+.card-bottom {
+  border-top: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 8px;
+  color: #74889b;
+}
+
+.card-bottom > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-bottom > span svg {
+  color: #8568ee;
+}
+
+.card-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #3173b3;
+  font-size: 8px;
+}
+
+.float-note {
+  position: absolute;
+  z-index: 2;
+  right: -20px;
+  top: -42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: white;
+  border: 1px solid #edf0f4;
+  box-shadow: 0 8px 25px rgba(11, 53, 88, 0.08);
+  border-radius: 6px;
+  padding: 10px 13px;
+  animation: drift 5s ease-in-out infinite;
+}
+
+.note-icon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: #f0edff;
+  color: #8568ee;
+  border-radius: 5px;
+}
+
+.float-note b,
+.float-note span {
+  display: block;
+}
+
+.float-note b {
+  font-size: 9px;
+  color: #23435e;
+}
+
+.float-note div > span {
+  font-size: 8px;
+  color: #8b9cad;
+  margin-top: 3px;
+}
+
+.floating-tag {
+  position: absolute;
+  bottom: -19px;
+  left: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #edf0f4;
+  border-radius: 99px;
+  padding: 8px 11px;
+  font-size: 8px;
+  color: #61778d;
+  box-shadow: 0 6px 18px rgba(11, 53, 88, 0.06);
+}
+
+.tag-check {
+  width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  background: #e5f7f0;
+  color: #24a178;
+  border-radius: 50%;
+}
+
+.scroll-cue {
+  position: absolute;
+  bottom: 26px;
+  left: 6.7%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 8px var(--mono);
+  letter-spacing: 1px;
+  color: #91a2b1;
+}
+
+/* ── Source strip ───────────────────────────────────────────── */
+
+/* Translucent so the shared grid continues through the band. The
+   reference could afford an opaque white here because it owned the
+   background; this page does not. */
+.source-strip {
+  min-height: 135px;
+  background: rgba(255, 255, 255, 0.72);
+  border-block: 1px solid #edf0f4;
+  padding: 24px 10.5%;
+  display: flex;
+  align-items: center;
+  gap: 90px;
+}
+
+.source-intro {
+  flex: 0 0 210px;
+}
+
+.source-intro p {
+  font: 600 14px / 1.45 var(--display);
+  letter-spacing: -0.3px;
+  color: #153d5e;
+  margin: 9px 0 0;
+}
+
+.source-list {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  flex: 1;
+}
+
+.source-item {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.source-item > span:last-child {
+  font-size: 9px;
+  color: #93a1af;
+}
+
+.source-item .source-badge {
+  font-size: 10px;
+  padding: 6px 10px;
+}
+
+.upload-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #74899d;
+  font-size: 9px;
+  white-space: nowrap;
+  border-left: 1px solid #e5eaf1;
+  padding-left: 22px;
+}
+
+/* ── Workflow ───────────────────────────────────────────────── */
+
+.section-pad {
+  padding: 105px 10.5%;
+}
+
+.workflow {
+  max-width: 1440px;
+  margin: auto;
+}
+
+.section-heading,
+.preview-header,
+.reviews-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 53px;
+}
+
+.section-heading h2,
+.preview-header h2,
+.reviews-head h2 {
+  font-size: 46px;
+  letter-spacing: -2.4px;
+  margin-top: 12px;
+}
+
+.section-heading h2 em,
+.preview-header h2 em,
+.reviews-head h2 em {
+  letter-spacing: -1.8px;
+}
+
+.section-heading > p,
+.preview-header > p,
+.reviews-head > p {
+  max-width: 315px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #75899c;
+  margin: 0 0 5px;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+}
+
+.step-card {
+  padding: 19px 19px 22px;
+  background: white;
+  border: 1px solid #e9edf2;
+  min-height: 330px;
+  transition: transform 0.25s, border-color 0.25s;
+}
+
+.step-card:hover {
+  transform: translateY(-4px);
+  border-color: #cddced;
+}
+
+.step-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-number {
+  font: 10px var(--mono);
+  color: #91a3b4;
+}
+
+.step-icon {
+  width: 31px;
+  height: 31px;
+  border: 1px solid #e8edf2;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #4079b3;
+}
+
+.step-preview {
+  /* The reference fixed this band to 139px. Measured at 768px the outline
+     mockup inside it needs 202px and the chat mockup 152px, because the
+     quoted section titles wrap in a narrower card — a fixed height cut
+     the third title mid-word. The floor keeps the card rhythm; auto lets
+     a mockup show all of what it is quoting. */
+  min-height: 139px;
+  height: auto;
+  display: grid;
+  place-items: center;
+  margin: 12px 0 14px;
+  background: linear-gradient(145deg, #f8fafc, #f4f7fa);
+  border: 1px solid #eff2f6;
+  overflow: hidden;
+}
+
+.chat-preview {
+  width: 74%;
+  position: relative;
+}
+
+.chat-bubble {
+  border: 1px solid #e8edf3;
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-size: 8px;
+  line-height: 1.5;
+  color: #657b90;
+  background: white;
+}
+
+.user-bubble {
+  margin-left: 18px;
+  width: 87%;
+}
+
+.ai-bubble {
+  margin-top: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 11px;
+}
+
+.tiny-star {
+  font-size: 9px;
+  color: #169b79;
+  margin-bottom: 3px;
+}
+
+.chat-bubble .line {
+  margin-top: 4px;
+}
+
+.chat-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: #93a3b1;
+  font-size: 7px;
+}
+
+.chat-source .source-badge {
+  font-size: 7px;
+  padding: 3px 6px;
+}
+
+.outline-preview {
+  width: 75%;
+  background: white;
+  border: 1px solid #e8edf3;
+  padding: 12px 14px;
+  box-shadow: 0 3px 10px rgba(11, 53, 88, 0.04);
+}
+
+.outline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 7px var(--mono);
+  letter-spacing: 0.5px;
+  color: #91a2b2;
+  margin-bottom: 9px;
+}
+
+.outline-head svg {
+  color: #2baf84;
+}
+
+.outline-preview p {
+  font-size: 8px;
+  color: #536d84;
+  padding: 6px 7px;
+  margin: 0;
+  border-left: 2px solid transparent;
+}
+
+.outline-preview p:first-of-type {
+  background: #f3f7fc;
+  border-color: #4385ca;
+  color: #274965;
+}
+
+.outline-preview p b {
+  font: 7px var(--mono);
+  margin-right: 9px;
+  color: #8da1b2;
+}
+
+.outline-foot {
+  border-top: 1px solid #edf0f4;
+  margin-top: 7px;
+  padding-top: 8px;
+  font-size: 7px;
+  color: #91a2b2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mini-glow {
+  height: 5px;
+  width: 5px;
+  border-radius: 50%;
+  background: #51c3a0;
+}
+
+.final-preview {
+  width: 75%;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e9edf2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  box-shadow: 0 3px 10px rgba(11, 53, 88, 0.04);
+}
+
+.final-icon {
+  width: 31px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  background: #eaf3ff;
+  color: #1674d8;
+  border-radius: 4px;
+}
+
+.final-preview b,
+.final-preview span {
+  display: block;
+}
+
+.final-preview b {
+  font-size: 9px;
+  color: #34546f;
+}
+
+.final-preview div:nth-child(2) span {
+  font-size: 7px;
+  color: #94a3b1;
+  margin-top: 4px;
+}
+
+.final-check {
+  margin-left: auto;
+  color: #2aaf82;
+}
+
+.step-label {
+  font-size: 8px;
+  color: #8296a8;
+}
+
+.step-card h3 {
+  font: 600 17px var(--display);
+  letter-spacing: -0.5px;
+  color: #183e5d;
+  margin: 8px 0;
+}
+
+.step-card > p {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #8293a3;
+  max-width: 260px;
+  margin: 0;
+}
+
+/* Under a step that promises more than this build does, one quiet line
+   says which half is already true. Same chip as the source strip uses. */
+.step-card > .step-note {
+  font-size: 9px;
+  line-height: 1.6;
+  color: #94a5b4;
+  max-width: 260px;
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid #e9eef4;
+}
+
+.step-note .tiny-label {
+  margin-right: 6px;
+  color: #1674d8;
+}
+
+/* ── Feature section ────────────────────────────────────────── */
+
+.feature-section {
+  background: rgba(240, 243, 248, 0.72);
+  padding: 104px 10.5%;
+}
+
+.feature-inner {
+  max-width: 1150px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 65px;
+  align-items: center;
+}
+
+.feature-copy h2 {
+  font-size: 44px;
+  letter-spacing: -2.5px;
+  margin-top: 15px;
+}
+
+.feature-copy h2 em {
+  letter-spacing: -1.8px;
+}
+
+.feature-copy > p {
+  max-width: 340px;
+  color: #70859a;
+  font-size: 12px;
+  line-height: 1.85;
+  margin: 20px 0;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #176dbb;
+  border-bottom: 1px solid #acc9e3;
+  padding: 0 0 6px;
+  transition: gap 0.2s;
+}
+
+.text-link:hover {
+  gap: 15px;
+}
+
+.feature-visual {
+  height: 370px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.orbit {
+  position: absolute;
+  border: 1px solid #dae3ec;
+  border-radius: 50%;
+  transform: rotate(-23deg);
+}
+
+.orbit-one {
+  width: 395px;
+  height: 220px;
+}
+
+.orbit-two {
+  width: 285px;
+  height: 338px;
+  transform: rotate(36deg);
+}
+
+.flow-node {
+  position: absolute;
+  z-index: 1;
+  width: 174px;
+  background: white;
+  border: 1px solid #e2e9f0;
+  padding: 15px;
+  box-shadow: 0 10px 25px rgba(11, 53, 88, 0.05);
+}
+
+.source-node {
+  left: 7%;
+  top: 70px;
+  transform: rotate(-4deg);
+}
+
+.doc-node {
+  right: 8%;
+  bottom: 52px;
+  transform: rotate(3deg);
+}
+
+.node-mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: #f1faf7;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.node-mark .source-badge {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.flow-node > span {
+  display: block;
+  font: 7px var(--mono);
+  letter-spacing: 0.6px;
+  color: #93a4b2;
+}
+
+.flow-node > strong {
+  display: block;
+  margin: 6px 0 10px;
+  font: 600 12px var(--display);
+  color: #31516d;
+}
+
+.node-lines i {
+  display: block;
+  height: 4px;
+  background: #edf1f5;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+.node-lines i:first-child {
+  width: 95%;
+}
+
+.node-lines i:nth-child(2) {
+  width: 77%;
+}
+
+.node-lines i:last-child {
+  width: 54%;
+}
+
+.doc-symbol {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: #eef5ff;
+  color: #3179c1;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.flow-connector {
+  position: absolute;
+  top: 50%;
+  left: 41%;
+  width: 120px;
+  height: 1px;
+  background: #9ab8d3;
+  transform: rotate(25deg);
+}
+
+.flow-connector:after {
+  content: '›';
+  position: absolute;
+  right: -2px;
+  top: -12px;
+  color: #4f88bc;
+  font-size: 17px;
+}
+
+.flow-connector span {
+  position: absolute;
+  left: 30px;
+  top: -17px;
+  font: 8px var(--mono);
+  color: #8ba3b8;
+}
+
+.feature-stamp {
+  position: absolute;
+  right: 3%;
+  top: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+  line-height: 1.6;
+  color: #8296a8;
+}
+
+.stamp-icon {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: white;
+  display: grid;
+  place-items: center;
+  color: #2eaa83;
+}
+
+.feature-caption {
+  position: absolute;
+  left: 4%;
+  bottom: 20px;
+  font: 8px var(--mono);
+  letter-spacing: 0.9px;
+  color: #95a7b6;
+}
+
+/* ── Preview window ─────────────────────────────────────────── */
+
+.preview-section {
+  max-width: 1440px;
+  margin: auto;
+  padding-top: 110px;
+  padding-bottom: 93px;
+}
+
+.preview-header {
+  margin-bottom: 39px;
+}
+
+.preview-header h2 {
+  font-size: 42px;
+}
+
+.preview-header > p {
+  max-width: 280px;
+}
+
+.editor-window {
+  background: white;
+  border: 1px solid #e1e7ee;
+  box-shadow: 0 18px 55px rgba(11, 53, 88, 0.1);
+}
+
+.editor-top {
+  height: 44px;
+  border-bottom: 1px solid #e9edf2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+}
+
+.editor-breadcrumb {
+  font-size: 9px;
+  color: #627a90;
+}
+
+.editor-breadcrumb span {
+  padding: 0 5px;
+  color: #aebbc7;
+}
+
+.editor-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-actions .export-button {
+  border: 1px solid #e4eaf0;
+  border-radius: 4px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  color: #768b9d;
+}
+
+.editor-body {
+  display: grid;
+  grid-template-columns: 53px 154px minmax(300px, 1fr) 205px;
+  min-height: 370px;
+}
+
+.editor-rail {
+  border-right: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+  padding: 13px 0;
+}
+
+.editor-rail .brand {
+  margin-bottom: 8px;
+}
+
+/* The rail is an icon column — 53px wide at desktop, 38px at phone — so
+   the wordmark beside its mark cannot fit in it at any width. Measured,
+   the pair hung 12px outside the window's left edge and over the outline
+   pane. The mark alone is what a rail this narrow shows. */
+.editor-rail .brand > span:last-child {
+  display: none;
+}
+
+.rail-item {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #8fa1b1;
+  border-radius: 5px;
+}
+
+.rail-selected {
+  background: #edf5ff;
+  color: #2779c2;
+}
+
+.rail-vault {
+  margin-top: auto;
+}
+
+.editor-outline {
+  padding: 21px 12px;
+  border-right: 1px solid #edf0f4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.editor-outline .tiny-label,
+.editor-assist .tiny-label {
+  font-size: 7px;
+  letter-spacing: 0.8px;
+  margin-bottom: 5px;
+}
+
+.editor-outline > a {
+  font-size: 8px;
+  color: #8092a2;
+  padding: 5px 0 5px 8px;
+  border-left: 2px solid transparent;
+}
+
+.editor-outline > a.outline-selected {
+  border-color: #3a87cd;
+  color: #28679f;
+}
+
+.outline-source {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #edf0f4;
+  width: 100%;
+}
+
+.outline-source > span {
+  display: block;
+  font: 7px var(--mono);
+  letter-spacing: 0.6px;
+  color: #97a6b3;
+  margin-bottom: 8px;
+}
+
+.outline-source .source-badge {
+  font-size: 7px;
+  padding: 4px 6px;
+}
+
+.outline-source small {
+  display: block;
+  margin-top: 7px;
+  font-size: 7px;
+  color: #94a2af;
+}
+
+.editor-paper {
+  margin: 21px auto 16px;
+  width: min(100% - 38px, 410px);
+  padding: 24px 31px 14px;
+  border: 1px solid #f0f2f5;
+  box-shadow: 0 3px 15px rgba(11, 53, 88, 0.035);
+  position: relative;
+}
+
+.paper-topline {
+  font-size: 7px;
+}
+
+.paper-topline span {
+  color: #bdc7d0;
+  padding: 0 3px;
+}
+
+.editor-paper h3 {
+  font: 700 24px / 1.17 var(--display);
+  letter-spacing: -1px;
+  color: #193f5f;
+  margin: 11px 0 5px;
+}
+
+.paper-intro {
+  font-size: 8px;
+  color: #90a1af;
+  margin: 0;
+}
+
+.editor-paper .paper-rule {
+  margin: 16px 0;
+}
+
+.editor-paper h4 {
+  font: 600 10px var(--display);
+  color: #244965;
+  margin: 12px 0 5px;
+}
+
+.editor-paper h4 span {
+  font: 8px var(--mono);
+  color: #4a88bf;
+  padding-right: 8px;
+}
+
+.editor-paper > p:not(.paper-intro) {
+  font-size: 8px;
+  line-height: 1.68;
+  color: #72879a;
+  margin: 0;
+}
+
+.paper-code {
+  margin: 9px 0 2px;
+  padding: 9px 11px;
+  background: #f6f9fc;
+  border: 1px solid #eaeff4;
+  border-radius: 4px;
+  font: 7px / 1.7 var(--mono);
+  color: #3f5f7c;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.paper-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #edf0f4;
+  padding-top: 9px;
+  margin-top: 14px;
+  font-size: 7px;
+  color: #91a0ad;
+}
+
+.paper-footer span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #48a587;
+}
+
+.editor-assist {
+  border-left: 1px solid #edf0f4;
+  padding: 20px 13px;
+  background: #fcfdfe;
+}
+
+.assist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 15px;
+  color: #91a2b0;
+}
+
+.assist-header .source-badge {
+  font-size: 7px;
+  padding: 4px 6px;
+}
+
+.assist-message {
+  border: 1px solid #edf0f3;
+  background: #fff;
+  padding: 9px;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.assist-speaker {
+  font: 7px var(--mono);
+  letter-spacing: 0.5px;
+  color: #91a2b0;
+}
+
+.assist-ai .assist-speaker i {
+  font-style: normal;
+  color: #16a47e;
+}
+
+.assist-message p {
+  font-size: 8px;
+  line-height: 1.6;
+  color: #627a90;
+  margin: 6px 0 0;
+}
+
+.assist-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 7px;
+  color: #90a1ad;
+  margin-top: 15px;
+}
+
+.assist-dot {
+  height: 5px;
+  width: 5px;
+  border-radius: 50%;
+  background: #36bf9a;
+}
+
+.preview-caption {
+  display: flex;
+  justify-content: space-between;
+  font: 8px var(--mono);
+  letter-spacing: 0.7px;
+  color: #91a2b0;
+  padding-top: 12px;
+}
+
+/* ── Reviews ──────────────────────────────────────────────────
+   The reference had no review band. This one is drawn in the same
+   grammar — mono label, display heading with a serif accent, a
+   white bordered panel — and it reports the genuine zero. */
+
+.reviews-section {
+  max-width: 1440px;
+  margin: auto;
+  padding: 24px 10.5% 104px;
+}
+
+.reviews-head {
+  margin-bottom: 34px;
+}
+
+.reviews-head h2 {
+  font-size: 42px;
+}
+
+.reviews-head > p {
+  max-width: 300px;
+}
+
+.reviews-panel {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  background: white;
+  border: 1px solid #e1e7ee;
+  box-shadow: 0 18px 55px rgba(11, 53, 88, 0.07);
+}
+
+.reviews-score {
+  padding: 26px;
+  border-right: 1px solid #edf0f4;
+}
+
+.reviews-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font: 700 34px / 1 var(--display);
+  letter-spacing: -1.6px;
+  color: #183c5b;
+  font-variant-numeric: tabular-nums;
+}
+
+.reviews-figure em {
+  font: 9px var(--mono);
+  font-style: normal;
+  letter-spacing: 0.6px;
+  color: #91a2b2;
+}
+
+.reviews-stars {
+  display: flex;
+  gap: 4px;
+  margin: 13px 0 9px;
+  color: #d7e0e9;
+}
+
+.reviews-count {
+  font-size: 8px;
+  color: #90a1ad;
+}
+
+.reviews-body {
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  justify-content: center;
+}
+
+.reviews-body p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #75899c;
+  max-width: 52ch;
+}
+
+.reviews-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.reviews-rules li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-size: 10px;
+  line-height: 1.7;
+  color: #8296a8;
+}
+
+.reviews-rules li::before {
+  content: '';
+  height: 4px;
+  width: 4px;
+  border-radius: 50%;
+  background: #c6d5e4;
+  flex: 0 0 auto;
+}
+
+/* ── Closing ────────────────────────────────────────────────── */
+
+.closing {
+  min-height: 415px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(238, 243, 248, 0.72);
+  border-block: 1px solid #e6ecf2;
+  overflow: hidden;
+}
+
+.closing-content {
+  position: relative;
+  z-index: 1;
+  padding: 65px 20px;
+}
+
+.closing h2 {
+  font-size: 48px;
+  letter-spacing: -2.8px;
+  margin: 17px 0 22px;
+}
+
+.closing h2 em {
+  letter-spacing: -1.8px;
+}
+
+.closing-content .button-primary {
+  margin-top: 2px;
+}
+
+/* The library and the import are the two ways into the product, and at
+   narrow widths the pair wraps onto its own lines rather than overflowing. */
+.closing-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+
+.closing-footnote {
+  display: block;
+  margin-top: 19px;
+  font-size: 9px;
+  color: #8295a7;
+}
+
+.closing-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: flex-start;
+  opacity: 0.76;
+  mask-image: linear-gradient(to bottom, transparent 10%, black 45%, transparent 90%);
+}
+
+.closing-pixel {
+  width: 11px;
+  height: 11px;
+  background: #1685f5;
+  opacity: 0.2;
+  position: relative;
+  top: 8%;
+}
+
+.closing-pixel:nth-child(2) {
+  top: 16%;
+  background: #59c9ff;
+}
+
+.closing-pixel:nth-child(3) {
+  top: 24%;
+  background: #b078f3;
+}
+
+.closing-pixel:nth-child(4) {
+  top: 12%;
+  background: #006bff;
+}
+
+.closing-pixel:nth-child(5) {
+  top: 31%;
+  background: #e55cff;
+}
+
+.closing-pixel:nth-child(6) {
+  top: 20%;
+  background: #77cbff;
+}
+
+.closing-pixel:nth-child(7) {
+  top: 38%;
+  background: #3f7fff;
+}
+
+.closing-pixel:nth-child(8) {
+  top: 13%;
+  background: #4fc4bd;
+}
+
+.closing-pixel:nth-child(9) {
+  top: 29%;
+  background: #717dff;
+}
+
+/* ── Footer and bottom pill ─────────────────────────────────── */
+
+.footer {
+  min-height: 86px;
+  max-width: 1440px;
+  padding: 20px 6.7%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.footer .brand {
+  font-size: 14px;
+}
+
+.footer .brand-mark {
+  width: 16px;
+  height: 16px;
+}
+
+.footer-note {
+  font-size: 9px;
+  color: #8b9aa8;
+}
+
+.footer nav {
+  margin-left: auto;
+  display: flex;
+  gap: 23px;
+  font-size: 9px;
+  color: #778b9d;
+}
+
+.copyright {
+  font-size: 8px;
+  color: #a0acb7;
+  margin-left: 14px;
+}
+
+.bottom-pill {
+  position: fixed;
+  z-index: 30;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  padding: 8px 9px 8px 14px;
+  border: 1px solid rgba(221, 229, 237, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 28px rgba(11, 53, 88, 0.12);
+  backdrop-filter: blur(12px);
+  font-size: 9px;
+  color: #6b8195;
+  white-space: nowrap;
+}
+
+.bottom-pill > a:not(.pill-brand):not(.pill-next) {
+  transition: color 0.2s;
+}
+
+.bottom-pill > a:hover {
+  color: var(--blue);
+}
+
+.pill-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  color: #214663;
+}
+
+.pill-mark {
+  width: 14px;
+  height: 14px;
+  gap: 1px;
+}
+
+.pill-divider {
+  height: 17px;
+  width: 1px;
+  background: #e4eaf0;
+}
+
+.pill-next {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0b3558;
+  color: white;
+  transition: background 0.2s;
+}
+
+.pill-next:hover {
+  background: #006bff;
+}
+
+.bottom-pill a:focus-visible,
+.pp-landing .topbar a:focus-visible,
+.pp-landing .button-primary:focus-visible,
+.pp-landing .text-link:focus-visible {
+  outline: 2px solid #006bff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* ── Breakpoints, as supplied ───────────────────────────────── */
+
+@media (max-width: 980px) {
+  .topbar {
+    padding-inline: 5%;
+  }
+
+  .hero {
+    padding-inline: 5%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 5.7vw, 58px);
+  }
+
+  .hero-product {
+    width: 100%;
+  }
+
+  /* The reference kept four section links, a preview link and a CTA in
+     one row down to 700px, and its clipped shell hid the result. At this
+     width the labels wrap and collide, so the bar takes the dropdown the
+     reference already uses below 700px — with `top: 100%` it lands under
+     the bar whatever height the bar is. */
+  .nav-links {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin: 0;
+    padding: 17px 5% 21px;
+    background: #fff;
+    border-bottom: 1px solid #edf0f4;
+    box-shadow: 0 8px 18px rgba(11, 53, 88, 0.06);
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .nav-links.nav-open {
+    display: flex;
+  }
+
+  .nav-right {
+    gap: 14px;
+  }
+
+  .menu-toggle {
+    display: grid;
+    place-items: center;
+    margin-left: 10px;
+    padding: 6px;
+    border: 0;
+    background: transparent;
+    color: #476788;
+  }
+
+  .menu-toggle svg {
+    width: 19px;
+  }
+
+  /* Two columns at this width leave the copy column too narrow for the
+     pair on one line, so the secondary drops under a button that keeps
+     its own shape instead of wrapping inside the pill. */
+  .hero-actions {
+    flex-wrap: wrap;
+    row-gap: 14px;
+  }
+
+  .button-primary,
+  .nav-cta {
+    white-space: nowrap;
+  }
+
+  .source-strip {
+    padding-inline: 7%;
+    display: block;
+    gap: 0;
+  }
+
+  /* The reference kept the strip on one row down to 700px, and its own
+     `overflow: hidden` shell clipped what no longer fitted — at 768px the
+     intro column, three badges and the upload note need more than the
+     660px the padding leaves. The stacking the reference already does
+     below 700px is simply promoted to start here, so nothing is clipped
+     and the formats list stays readable. */
+  .source-intro {
+    margin-bottom: 17px;
+  }
+
+  .source-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 11px;
+  }
+
+  .source-item .source-badge {
+    font-size: 9px;
+  }
+
+  .upload-note {
+    grid-column: 1 / -1;
+    border: 0;
+    border-top: 1px solid #edf0f4;
+    padding: 11px 0 0;
+    margin-top: 3px;
+  }
+
+  /* The floating pill covers the middle of the page's last 42px, and from
+     this width down the footer's own link row drifts into that band —
+     measured at 768px, three of the four links sat under it. Clearance
+     below the footer keeps every link visible and clickable. */
+  .footer {
+    padding-bottom: 92px;
+  }
+
+  /* A narrower card wraps the titles the mockups quote, so the tallest of
+     the three needs 205px here instead of 139px. Every band takes that
+     height: nothing is cut mid-word and the three columns still share a
+     baseline for their labels. */
+  .step-preview {
+    min-height: 205px;
+  }
+
+  .section-pad,
+  .feature-section,
+  .reviews-section {
+    padding-inline: 7%;
+  }
+
+  .editor-body {
+    grid-template-columns: 46px 125px minmax(280px, 1fr);
+  }
+
+  .editor-assist {
+    display: none;
+  }
+
+  .feature-inner {
+    gap: 35px;
+  }
+
+  .source-node {
+    left: 0;
+  }
+
+  .doc-node {
+    right: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar-wrap {
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .topbar {
+    height: 62px;
+    padding: 0 5%;
+  }
+
+  .brand {
+    font-size: 15px;
+  }
+
+  .brand-mark {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* The dropdown itself is set above; only the narrower bar changes
+     here, and the preview link gives way to the CTA. */
+  .nav-right {
+    margin-left: auto;
+    gap: 12px;
+  }
+
+  .sign-in {
+    display: none;
+  }
+
+  .nav-cta {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+
+  .hero {
+    padding: 76px 6% 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  .hero-copy {
+    margin-top: 0;
+  }
+
+  .hero-caption {
+    margin-bottom: 18px;
+    font-size: 7px;
+  }
+
+  .eyebrow {
+    font-size: 8px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(39px, 10vw, 57px);
+    letter-spacing: -2.8px;
+  }
+
+  .hero h1 em {
+    letter-spacing: -2px;
+  }
+
+  .hero-description {
+    font-size: 13px;
+    max-width: 460px;
+    margin: 17px 0;
+  }
+
+  .hero-actions {
+    gap: 15px;
+  }
+
+  .button-primary {
+    padding: 13px 15px;
+    font-size: 11px;
+  }
+
+  .button-secondary {
+    font-size: 10px;
+  }
+
+  .hero-meta {
+    font-size: 9px;
+    margin-top: 22px;
+    gap: 9px;
+  }
+
+  .hero-product {
+    align-self: center;
+    margin: 63px 0 20px;
+    width: min(100%, 465px);
+  }
+
+  .float-note {
+    right: -4px;
+    top: -38px;
+  }
+
+  .workspace {
+    grid-template-columns: 86px 1fr;
+    min-height: 256px;
+  }
+
+  .mini-sidebar {
+    padding: 11px 6px;
+  }
+
+  /* The reference's wordmark was nine characters and its sidebar was
+     86px; "promptpaper" is eleven and needs a smaller size to sit in the
+     same measure without clipping the last letter. */
+  .mini-sidebar .brand-small {
+    font-size: 9px;
+  }
+
+  .mini-sidebar > span:not(.brand) {
+    font-size: 7px;
+  }
+
+  .mini-main {
+    padding: 13px 11px;
+  }
+
+  .document-sheet {
+    padding: 15px 16px;
+    min-height: 197px;
+  }
+
+  .document-sheet h3 {
+    font-size: 16px;
+  }
+
+  .scroll-cue {
+    bottom: 22px;
+    left: 6%;
+    font-size: 7px;
+  }
+
+  /* The strip already stacks above; only the tighter measure changes
+     below 700px. */
+  .source-strip {
+    padding: 24px 6%;
+  }
+
+  .source-intro p br {
+    display: none;
+  }
+
+  .source-intro p {
+    font-size: 13px;
+  }
+
+  .source-item {
+    gap: 6px;
+  }
+
+  .source-item .source-badge {
+    font-size: 8px;
+    padding: 5px 7px;
+    width: max-content;
+  }
+
+  .source-item > span:last-child {
+    font-size: 8px;
+  }
+
+  .section-pad {
+    padding: 70px 6%;
+  }
+
+  .section-heading,
+  .preview-header,
+  .reviews-head {
+    display: block;
+    margin-bottom: 29px;
+  }
+
+  .section-heading h2,
+  .preview-header h2,
+  .reviews-head h2 {
+    font-size: 37px;
+    letter-spacing: -2px;
+  }
+
+  .section-heading > p,
+  .preview-header > p,
+  .reviews-head > p {
+    margin-top: 16px;
+    font-size: 11px;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .step-card {
+    min-height: 0;
+    padding: 15px 16px 17px;
+    display: grid;
+    grid-template-columns: 1fr 132px;
+    grid-template-rows: auto auto auto auto;
+    column-gap: 14px;
+  }
+
+  .step-card-head {
+    grid-column: 1 / -1;
+  }
+
+  /* The reference fixed this panel to 126px, which is enough for its own
+     short outline lines but clips the longer section titles and the two
+     message bubbles here. The floor keeps the card rhythm; auto lets the
+     mockup show all of what it is quoting. */
+  .step-preview {
+    grid-column: 2;
+    grid-row: 2 / 5;
+    min-height: 126px;
+    height: auto;
+    margin: 4px 0 0;
+  }
+
+  .step-label {
+    grid-column: 1;
+    align-self: end;
+    margin-top: 13px;
+  }
+
+  .step-card h3 {
+    grid-column: 1;
+    font-size: 16px;
+    margin: 5px 0;
+  }
+
+  .step-card > p {
+    grid-column: 1;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+
+  .feature-section {
+    padding: 68px 6%;
+  }
+
+  .feature-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 25px;
+  }
+
+  .feature-copy h2 {
+    font-size: 39px;
+  }
+
+  .feature-copy > p {
+    font-size: 11px;
+  }
+
+  .feature-visual {
+    height: 305px;
+  }
+
+  .orbit-one {
+    width: 320px;
+    height: 180px;
+  }
+
+  .orbit-two {
+    width: 240px;
+    height: 295px;
+  }
+
+  .flow-node {
+    width: 147px;
+    padding: 12px;
+  }
+
+  .source-node {
+    top: 44px;
+    left: 2%;
+  }
+
+  .doc-node {
+    bottom: 39px;
+    right: 2%;
+  }
+
+  .flow-connector {
+    width: 89px;
+    left: 40%;
+  }
+
+  /* Two 147px cards leave a 14px gap at this width, so the label the
+     reference hung on the line lands on top of the document card. It
+     moves into the band between the card and the stamp, and un-tilts so
+     the word reads straight. */
+  .flow-connector span {
+    left: 45px;
+    top: -84px;
+    transform: rotate(-25deg);
+  }
+
+  .feature-stamp {
+    right: 1%;
+    top: 18px;
+  }
+
+  .feature-caption {
+    font-size: 6px;
+    left: 1%;
+    bottom: 9px;
+  }
+
+  .preview-section {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .preview-header h2 {
+    font-size: 34px;
+  }
+
+  .editor-top {
+    padding: 0 10px;
+    gap: 9px;
+  }
+
+  .editor-breadcrumb {
+    font-size: 8px;
+  }
+
+  .editor-body {
+    grid-template-columns: 38px minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .editor-rail {
+    grid-row: 1;
+    padding: 10px 0;
+    gap: 10px;
+  }
+
+  .editor-rail .brand {
+    transform: scale(0.8);
+  }
+
+  .editor-outline {
+    display: none;
+  }
+
+  .editor-paper {
+    grid-column: 2;
+    width: calc(100% - 20px);
+    margin: 13px 10px;
+    padding: 19px 18px 12px;
+  }
+
+  .editor-paper h3 {
+    font-size: 21px;
+  }
+
+  .editor-paper > p:not(.paper-intro) {
+    font-size: 8px;
+  }
+
+  .preview-caption {
+    font-size: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .reviews-section {
+    padding: 8px 6% 68px;
+  }
+
+  .reviews-head h2 {
+    font-size: 34px;
+  }
+
+  .reviews-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .reviews-score {
+    border-right: 0;
+    border-bottom: 1px solid #edf0f4;
+    padding: 20px;
+  }
+
+  .reviews-body {
+    padding: 20px;
+  }
+
+  .closing {
+    min-height: 365px;
+  }
+
+  .closing h2 {
+    font-size: 40px;
+    letter-spacing: -2px;
+  }
+
+  .closing h2 em {
+    letter-spacing: -1.5px;
+  }
+
+  .closing-content .tiny-label {
+    font-size: 7px;
+  }
+
+  /* The 92px below is the pill clearance set for this range above; the
+     shorthand here has to repeat it, or it would overwrite it. */
+  .footer {
+    padding: 23px 6% 92px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+  }
+
+  .footer-note {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .footer nav {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 3px 0 0;
+    gap: 19px;
+  }
+
+  .copyright {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+  }
+
+  .bottom-pill {
+    bottom: 10px;
+    gap: 13px;
+    padding: 7px 8px 7px 11px;
+    font-size: 8px;
+  }
+
+  .pill-brand {
+    gap: 5px;
+  }
+
+  .pill-mark {
+    width: 12px;
+    height: 12px;
+  }
+
+  .pill-divider {
+    height: 14px;
+  }
+
+  .pill-next {
+    width: 21px;
+    height: 21px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero h1 {
+    font-size: 37px;
+  }
+
+  .hero-actions {
+    gap: 10px;
+  }
+
+  .button-primary {
+    gap: 9px;
+  }
+
+  .hero-meta {
+    font-size: 8px;
+  }
+
+  .workspace {
+    grid-template-columns: 73px 1fr;
+  }
+
+  .mini-main {
+    padding-inline: 8px;
+  }
+
+  .document-sheet {
+    padding: 13px;
+  }
+
+  .bottom-pill {
+    gap: 10px;
+  }
+
+  .bottom-pill > a:nth-of-type(3) {
+    display: none;
+  }
+
+  .step-card {
+    grid-template-columns: 1fr 112px;
+  }
+
+  .step-preview {
+    min-height: 118px;
+  }
+}
