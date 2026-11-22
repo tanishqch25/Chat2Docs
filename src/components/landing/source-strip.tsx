@@ -9,10 +9,11 @@ const SOURCES = [
 ]
 
 /**
- * Where the conversations come from. All three are reached two ways in the
- * build that is running now: copying a thread in, or handing PromptPaper the
- * export file the provider generates. The formats named underneath are the
- * ones the readers accept.
+ * Where the conversations come from. All three are reached three ways in the
+ * build that is running now: copying a thread in, pasting the public share
+ * link the provider makes, or handing PromptPaper the export file the
+ * provider generates. The formats named underneath are the ones the readers
+ * accept.
  */
 function SourceStrip() {
   return (
@@ -33,7 +34,7 @@ function SourceStrip() {
         {SOURCES.map((source) => (
           <div className="source-item" key={source.kind}>
             <SourceBadge name={source.name} kind={source.kind} />
-            <span>Paste or upload</span>
+            <span>Paste, share link or upload</span>
           </div>
         ))}
 
