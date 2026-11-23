@@ -72,3 +72,50 @@ export function timestampFrom(...candidates: unknown[]): string | undefined {
 export function shorten(value: string, max = 64): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value
 }
+
+/**
+ * The span of a JSON object or array that starts at `from`.
+ *
+ * Written by hand rather than left to a regular expression because braces
+ * nest and a string can hold a brace: the scanner tracks depth outside
+ * strings and stops the moment a value is complete. A span it cannot close is
+ * reported as no value at all, which is the honest answer for a truncated or
+ * non-JSON stretch of script.
+ */
+export function jsonSpan(text: string, from: number): string | null {
+  const opener = text[from]
+  if (opener !== '{' && opener !== '[') return null
+  const closer = opener === '{' ? '}' : ']'
+  let depth = 0
+  let inString = false
+  let escaped = false
+
+  for (let at = from; at < text.length; at += 1) {
+    const char = text[at]
+    if (inString) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') inString = false
+      continue
+    }
+    if (char === '"') inString = true
+    else if (char === opener) depth += 1
+    else if (char === closer) {
+      depth -= 1
+      if (depth === 0) return text.slice(from, at + 1)
+    }
+  }
+  return null
+}
+
+/** The JSON value a span holds, or nothing when it is really JavaScript. */
+export function parseSpan(span: string): unknown {
+  // A quoted key is what separates a JSON payload from the JavaScript object
+  // literals around it; the parse simply fails on those.
+  if (!/"[A-Za-z_]\w*"\s*:/.test(span)) return undefined
+  try {
+    return JSON.parse(span)
+  } catch {
+    return undefined
+  }
+}

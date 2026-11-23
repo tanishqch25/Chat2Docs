@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
 import { ByokPanel } from '@/components/transform/byok-panel'
@@ -14,7 +14,7 @@ import { useDocuments } from '@/hooks/useDocuments'
 import { AiCancelledError, generateMarkdown } from '@/lib/ai/aiClient'
 import { BLANK_SETTINGS, clearAiSettings, loadAiSettings, saveAiSettings } from '@/lib/ai/aiSettings'
 import type { AiSettings } from '@/lib/ai/aiSettings'
-import { buildPrompt, derivedTitle, toDerivedContent } from '@/lib/ai/documentModes'
+import { AI_MODES, buildPrompt, derivedTitle, toDerivedContent } from '@/lib/ai/documentModes'
 import type { AiMode, CustomBrief, GeneratedDocument } from '@/lib/ai/documentModes'
 
 const EMPTY_BRIEF: CustomBrief = { customTitle: '', instructions: '', audienceTone: '' }
@@ -63,11 +63,18 @@ function MissingState({ documentId, problem }: { documentId?: string; problem: s
 
 function TransformPage() {
   const { documentId } = useParams()
+  const [search] = useSearchParams()
   const library = useDocuments()
   const record = library.documents.find((each) => each.id === documentId)
 
   const [step, setStep] = React.useState<TransformStep>('mode')
-  const [mode, setMode] = React.useState<AiMode>('study_notes')
+  // Import can hand a conversation straight to one mode, and an address that
+  // names a mode this page does not have starts at the choice it was already
+  // going to show rather than picking a task for the visitor.
+  const wanted = search.get('mode')
+  const [mode, setMode] = React.useState<AiMode>(
+    wanted && (AI_MODES as readonly string[]).includes(wanted) ? (wanted as AiMode) : 'study_notes',
+  )
   const [custom, setCustom] = React.useState<CustomBrief>(EMPTY_BRIEF)
   const [settings, setSettings] = React.useState<AiSettings>(() => loadAiSettings())
   /** The key panel's fields. Held here rather than inside the panel because

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, ClipboardPaste, FileUp, Link2 } from 'lucide-react'
 
 import { ConversationCard } from '@/components/import/conversation-card'
@@ -69,6 +69,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
  * answer is kept anywhere.
  */
 function ImportPage() {
+  const navigate = useNavigate()
   // What landed in the library on the last save, kept so the next screen
   // can name it: an address to open, and the titles beside it.
   const [saved, setSaved] = React.useState<{ id: string; title: string }[]>([])
@@ -211,7 +212,7 @@ function ImportPage() {
     setSaved([])
   }
 
-  const save = async () => {
+  const save = async (goToNotes = false) => {
     setBusy(true)
     setFailure(null)
     const kept: { id: string; title: string }[] = []
@@ -240,6 +241,12 @@ function ImportPage() {
     setSaved(kept)
     setStage('saved')
     setBusy(false)
+    // The handoff is to the conversation that was just written, so the notes
+    // are made from the saved record rather than from state that is about to
+    // go away. Anything else imported stays in the library, listed with its
+    // own Export.
+    const [first] = kept
+    if (goToNotes && first) navigate(`/transform/${first.id}?mode=study_notes`)
   }
 
   const savable = drafts.length > 0 && drafts.every(isSavable)
@@ -455,6 +462,13 @@ function ImportPage() {
                   ? 'Saving…'
                   : `Save ${drafts.length === 1 ? 'conversation' : `${drafts.length} conversations`} to Local Library`}
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => void save(true)}
+                disabled={!savable || busy}
+              >
+                Save &amp; Create Study Notes
+              </Button>
               <Button variant="ghost" onClick={startOver} className="text-muted hover:text-foreground">
                 Clear and start over
               </Button>
@@ -467,6 +481,14 @@ function ImportPage() {
                           untitled === 1 ? 'it is' : 'they are'
                         } saved.`
                       : null}
+                </p>
+              ) : drafts.length > 1 ? (
+                <p className="text-caption text-muted">
+                  Study notes are made from the first conversation saved —{" "}
+                  <span className="font-medium text-foreground">
+                    {drafts[0]?.title.trim() || 'untitled'}
+                  </span>
+                  . The rest stay in your library, each with its own Export.
                 </p>
               ) : null}
             </div>

@@ -289,6 +289,22 @@ function messagesFromBranch(
     const absolute = asRecord(asRecord(metadata?.timestamp_)?.absolute)
     const isHidden = isFlagged(metadata?.is_visually_hidden_from_conversation)
     const content = blocksFromContent(turn.content, notes, at)
+    // A long paste becomes a file of its own, and then the turn's text is
+    // empty while the turn itself is real. The file is named, never invented.
+    if (content.length === 0) {
+      for (const entry of asArray(metadata?.attachments)) {
+        const file = asRecord(entry)
+        if (!file) continue
+        content.push(
+          attachmentBlock(
+            asText(file.library_file_id) ?? asText(file.id) ?? 'attachment',
+            file,
+            notes,
+            at,
+          ),
+        )
+      }
+    }
     if (content.length === 0) {
       blank += 1
       continue
