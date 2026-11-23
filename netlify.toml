@@ -1,11 +1,12 @@
 # PromptPaper on Netlify: the built single-page app, plus the one server
 # function that reads a public share link.
 #
-# The relay is not duplicated. `netlify/functions/fetch-share.ts` re-exports
-# the handlers from `api/fetch-share.ts`, and `vite-share-proxy.ts` serves the
-# same `api/shareFetchCore.ts` during `npm run dev` and `npm run preview`, so
-# the endpoint a developer tests locally and the endpoint a visitor reaches
-# when deployed are the same code with the same rules.
+# The relay is not duplicated. `netlify/functions/fetch-share.ts` is Netlify's
+# modern default handler — it routes by method and calls the `POST` and `GET`
+# exports of `api/fetch-share.ts`, and `vite-share-proxy.ts` serves the same
+# `api/shareFetchCore.ts` during `npm run dev` and `npm run preview`, so the
+# endpoint a developer tests locally and the endpoint a visitor reaches when
+# deployed are the same code with the same rules.
 #
 # Two settings are load-bearing rather than decorative, and both come from how
 # the relay is structured:
