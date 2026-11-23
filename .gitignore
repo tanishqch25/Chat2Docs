@@ -30,6 +30,13 @@ codebase.txt
 .verify-tmp/
 landing-reference/
 
+# Tool and OS noise. `.output` is what the Netlify CLI writes beside a build;
+# `desktop.ini` is the Windows counterpart of `.DS_Store` on this machine.
+.output/
+*.log
+npm-debug.log*
+desktop.ini
+
 # Editor, AI tool & OS files
 .qoder/
 .vscode/*
