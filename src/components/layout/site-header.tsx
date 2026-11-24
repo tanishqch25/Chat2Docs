@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 
 import { Wordmark } from '@/components/brand/wordmark'
 import { Container } from '@/components/layout/container'
@@ -21,7 +21,17 @@ const NAV_LINKS = [
   { label: 'Reviews', href: '/#reviews' },
 ]
 
-function SiteHeader() {
+/** The shortcut the layout listens for, written the way this machine's
+ *  keyboard names it. Read once — the platform does not change mid-page. */
+const KEYCAP = /^Mac/i.test(navigator.platform) ? '⌘K' : 'Ctrl K'
+
+interface SiteHeaderProps {
+  /** The search palette is owned by the layout, because `Ctrl+K` opens it
+   *  from routes this header is not drawn on. */
+  onSearch: () => void
+}
+
+function SiteHeader({ onSearch }: SiteHeaderProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -43,35 +53,61 @@ function SiteHeader() {
           ))}
         </nav>
 
-        {/* Two actions, and neither is an account: PromptPaper works
-            without signing in. Import is where a conversation gets in,
-            the library is where it lives, and both are built, so both are
-            offered. They sit in the right-hand cluster rather than the
-            section list because a route is not a section anchor. The menu
-            stays a fallback for the section links. */}
-        <div className="hidden items-center gap-5 md:flex">
-          <Link
-            to="/import"
-            className="text-body-sm font-medium text-foreground transition-colors hover:text-signal-blue"
+        {/* One right-hand group, so the bar reads the same at every width:
+            wordmark at one end, everything the app does at the other. The
+            search trigger is the one control that never collapses away — on
+            a phone the keycap has no keys to show, so it keeps the icon. */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onSearch}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'sm' }),
+              'gap-2 text-muted hover:text-foreground',
+            )}
           >
-            Import
-          </Link>
-          <Link to="/documents" className={buttonVariants({ size: 'sm' })}>
-            Open your documents
-          </Link>
-        </div>
+            <Search aria-hidden className="size-4" />
+            <span className="hidden lg:inline">Search</span>
+            <kbd
+              aria-hidden
+              className="hidden rounded-badge border border-border bg-pebble px-1.5 py-0.5 font-mono text-[0.7rem] leading-none text-muted lg:inline"
+            >
+              {KEYCAP}
+            </kbd>
+            {/* Named once, whichever half of the label is on show. */}
+            <span className="sr-only lg:hidden">Search your documents</span>
+          </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          onClick={() => setOpen((value) => !value)}
-        >
-          <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
-          {open ? <X aria-hidden className="size-5" /> : <Menu aria-hidden className="size-5" />}
-        </Button>
+          {/* Two actions, and neither is an account: PromptPaper works
+              without signing in. Import is where a conversation gets in,
+              the library is where it lives, and both are built, so both are
+              offered. They sit in the right-hand cluster rather than the
+              section list because a route is not a section anchor. The menu
+              stays a fallback for the section links. */}
+          <div className="hidden items-center gap-5 md:flex">
+            <Link
+              to="/import"
+              className="text-body-sm font-medium text-foreground transition-colors hover:text-signal-blue"
+            >
+              Import
+            </Link>
+            <Link to="/documents" className={buttonVariants({ size: 'sm' })}>
+              Open your documents
+            </Link>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            onClick={() => setOpen((value) => !value)}
+          >
+            <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
+            {open ? <X aria-hidden className="size-5" /> : <Menu aria-hidden className="size-5" />}
+          </Button>
+        </div>
       </Container>
 
       {/*

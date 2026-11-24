@@ -180,11 +180,15 @@ export async function createDocument(draft: DocumentDraft): Promise<LocalDocumen
  * derived fields are recalculated here — the blocks go in exactly as the
  * parser read them, which is what "no silent drops" means in practice.
  */
-export async function createImportedDocument(input: {
+export interface ImportedDocumentInput {
   title: string
   provider: DocumentProvider
   messages: NormalizedMessage[]
-}): Promise<LocalDocument> {
+}
+
+export async function createImportedDocument(
+  input: ImportedDocumentInput,
+): Promise<LocalDocument> {
   const now = new Date().toISOString()
   const messages = input.messages.map((message, index) => ({
     ...message,

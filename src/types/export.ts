@@ -6,10 +6,15 @@ import type { LocalDocument } from '@/types/document'
  * It is a single model rather than per-format options because the promise
  * of the export engine is that a document looks like the preview: what is
  * on screen at /export/:documentId and what arrives in the .docx are
- * decided by these same nine fields. No exporter may quietly default
+ * decided by these same eleven fields. No exporter may quietly default
  * something the preview did not show, and none may read anything from the
  * document beyond it — the content itself is never reflowed, shortened or
  * paraphrased on the way out.
+ *
+ * Two of the eleven decide what a page shows rather than what a record
+ * holds. `hideSystemAndToolTraces` and `tocStyle` are presentation choices
+ * read at the view layer: the stored document keeps every turn the import
+ * recovered, and switching the trace filter off puts them back.
  */
 
 export type PageSize = 'a4' | 'letter'
@@ -20,6 +25,10 @@ export type FontFamily = 'sans' | 'serif' | 'mono'
 
 export type FontScale = 'compact' | 'standard' | 'comfortable'
 
+/** How much the contents page says: the section headings and the questions
+ *  asked, every turn, or nothing. */
+export type TocStyle = 'topics' | 'all-turns' | 'none'
+
 export interface DocumentExportOptions {
   pageSize: PageSize
   /** Light and dark are both printable choices: dark is for reading on
@@ -28,10 +37,17 @@ export interface DocumentExportOptions {
   fontFamily: FontFamily
   fontScale: FontScale
   includeToc: boolean
+  /** 'topics' is the readable default; 'all-turns' is the complete outline
+   *  a long thread was drawn from before. Only read when `includeToc` is on. */
+  tocStyle: TocStyle
   includeMetadata: boolean
   includeRoleBadges: boolean
   includePreservationNotes: boolean
   includePageNumbers: boolean
+  /** On by default: a system turn or a reasoning marker is plumbing the
+   *  site wrote for itself, and sixty of them in a row is not a document.
+   *  Off, every one is written exactly as it was stored. */
+  hideSystemAndToolTraces: boolean
 }
 
 export const DEFAULT_EXPORT_OPTIONS: DocumentExportOptions = {
@@ -40,10 +56,12 @@ export const DEFAULT_EXPORT_OPTIONS: DocumentExportOptions = {
   fontFamily: 'sans',
   fontScale: 'standard',
   includeToc: true,
+  tocStyle: 'topics',
   includeMetadata: true,
   includeRoleBadges: true,
   includePreservationNotes: true,
   includePageNumbers: true,
+  hideSystemAndToolTraces: true,
 }
 
 /** Labels for the control rail. The stored values stay ASCII slugs, the
@@ -70,6 +88,12 @@ export const FONT_SCALE_LABEL: Record<FontScale, string> = {
   comfortable: 'Comfortable',
 }
 
+export const TOC_STYLE_LABEL: Record<TocStyle, string> = {
+  topics: 'Section topics',
+  'all-turns': 'Every turn',
+  none: 'Nothing',
+}
+
 /** Millimetres, so the sheet can be drawn to scale on any screen. A4 is
  *  210 × 297; US Letter is 215.9 × 279.4. */
 export const PAGE_MM: Record<PageSize, { width: number; height: number }> = {
@@ -77,10 +101,13 @@ export const PAGE_MM: Record<PageSize, { width: number; height: number }> = {
   letter: { width: 215.9, height: 279.4 },
 }
 
-/** The `@page` rule the print stylesheet writes for the chosen size. */
+/** The `@page` rule the print stylesheet writes for the chosen size.
+ *  Tighter left and right than top and bottom: a document of conversation
+ *  is mostly running text, and the extra measure it needs is for the page
+ *  number and the breathing room a reader's thumb holds a page by. */
 export const PAGE_AT_RULE: Record<PageSize, string> = {
-  a4: '@page { size: A4 portrait; margin: 16mm; }',
-  letter: '@page { size: letter portrait; margin: 0.65in; }',
+  a4: '@page { size: A4 portrait; margin: 16mm 14mm; }',
+  letter: '@page { size: letter portrait; margin: 0.63in 0.55in; }',
 }
 
 /** Word measures its pages in twentieths of a point (dxa): 1440 per inch. */

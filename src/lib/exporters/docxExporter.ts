@@ -1,13 +1,16 @@
 import { formatDateTime } from '@/lib/format'
 import { isFollowableHref } from '@/lib/links'
 import { LINE_BREAK } from '@/lib/editor/inline'
+import { tokenizeInline, type InlineToken } from '@/lib/parsers/inlineScanner'
 import {
   SPEAKER_LABEL,
+  TRACES_HIDDEN_NOTE,
+  exportView,
   headingAnchor,
   metadataRows,
-  orderedMessages,
   preservationStatement,
   tocFor,
+  tracesAreHidden,
   turnAnchor,
 } from '@/lib/exporters/shared'
 import { PAGE_DXA, type BlobExporter, type DocumentExportOptions } from '@/types/export'
@@ -256,12 +259,11 @@ function tableElement(
   options: DocumentExportOptions,
 ) {
   const border = { style: docx.BorderStyle.SINGLE, size: 4, color: RULE }
-  const run = bodyRun(options)
   const cell = (value: string, header: boolean) =>
     new docx.TableCell({
       children: [
         new docx.Paragraph({
-          children: [new docx.TextRun({ text: value, bold: header || undefined, ...run })],
+          children: inlineChildren(docx, value, options, header ? { bold: true } : undefined),
           spacing: { before: 40, after: 40 },
         }),
       ],
@@ -302,7 +304,12 @@ function tableElement(
     out.push(
       new docx.Paragraph({
         children: [
-          new docx.TextRun({ text: block.caption, italics: true, ...run, color: MUTED }),
+          new docx.TextRun({
+            text: block.caption,
+            italics: true,
+            ...bodyRun(options),
+            color: MUTED,
+          }),
         ],
         spacing: { before: 60, after: 160 },
       }),
@@ -370,6 +377,139 @@ function richChildren(
   return out
 }
 
+/**
+ * A paragraph the conversation wrote, rather than the editor.
+ *
+ * The scanner finds the marks inside the words — a bold phrase, an inline
+ * formula, a badge one site drew and no other understands — and Word gets
+ * what each of them says: bold is bold, a formula is the LaTeX it was given
+ * (Word will not typeset one, so the file says it in the only way a text
+ * document can), and a badge is the label written in bold.
+ */
+function tokenChildren(
+  docx: Docx,
+  each: InlineToken,
+  options: DocumentExportOptions,
+  style: Record<string, unknown> = {},
+): ParagraphChild[] {
+  const run = { ...bodyRun(options), ...style }
+  switch (each.kind) {
+    case 'text':
+      return lineRuns(docx, each.text, run)
+    case 'bold':
+    case 'badge':
+    case 'cite':
+      return lineRuns(docx, each.text, { ...run, bold: true })
+    case 'italic':
+      return lineRuns(docx, each.text, { ...run, italics: true })
+    case 'code':
+      return lineRuns(docx, each.text, monoRun(options))
+    case 'math':
+      return lineRuns(
+        docx,
+        each.display ? `$$ ${each.expression} $$` : `$${each.expression}$`,
+        monoRun(options),
+      )
+    case 'illustration':
+      return lineRuns(docx, `Illustration · ${each.text}`, {
+        ...run,
+        italics: true,
+        color: MUTED,
+      })
+    case 'link':
+      if (each.href && isFollowableHref(each.href)) {
+        return [
+          new docx.ExternalHyperlink({
+            link: each.href.trim(),
+            children: [
+              new docx.TextRun({
+                text: each.text || each.href,
+                ...run,
+                style: 'Hyperlink',
+                color: ACCENT,
+                underline: {},
+              }),
+            ],
+          }),
+        ]
+      }
+      return lineRuns(docx, `${each.text || each.href} (${each.href})`, run)
+    case 'divider':
+      return []
+  }
+}
+
+function inlineChildren(
+  docx: Docx,
+  source: string,
+  options: DocumentExportOptions,
+  style?: Record<string, unknown>,
+): ParagraphChild[] {
+  const out: ParagraphChild[] = []
+  for (const each of tokenizeInline(source)) {
+    out.push(...tokenChildren(docx, each, options, style))
+  }
+  return out
+}
+
+/** Prose that holds a divider becomes several paragraphs, because a rule is
+ *  a break between them and Word has no rule that sits inside one. */
+function proseChildren(
+  docx: Docx,
+  source: string,
+  options: DocumentExportOptions,
+): FileChild[] {
+  const out: FileChild[] = []
+  let current: ParagraphChild[] = []
+
+  const paragraph = (children: ParagraphChild[]) =>
+    new docx.Paragraph({ children, spacing: { after: 120 } })
+
+  const flush = () => {
+    if (current.length === 0) return
+    out.push(paragraph(current))
+    current = []
+  }
+
+  for (const each of tokenizeInline(source)) {
+    if (each.kind === 'divider') {
+      flush()
+      out.push(
+        new docx.Paragraph({
+          children: [],
+          border: { bottom: { style: docx.BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } },
+          spacing: { before: 120, after: 120 },
+        }),
+      )
+      continue
+    }
+    current.push(...tokenChildren(docx, each, options))
+  }
+  flush()
+
+  if (out.length === 0) {
+    // Nothing but space where the marks were: the words the block was given
+    // stay in the file, newlines and all.
+    out.push(paragraph(lineRuns(docx, source, bodyRun(options))))
+  }
+  return out
+}
+
+/** The words a piece of prose says, with its marks drawn off: what a
+ *  heading, a list item or a table cell can hold is one line of text. */
+function inlinePlain(source: string): string {
+  return tokenizeInline(source)
+    .map((each) => {
+      if (each.kind === 'text') return each.text
+      if (each.kind === 'divider') return ''
+      if (each.kind === 'math') return each.expression
+      if (each.kind === 'illustration') return `Illustration · ${each.text}`
+      if (each.kind === 'cite') return each.href ? `${each.text} (${each.href})` : each.text
+      return each.text
+    })
+    .join('')
+}
+
 /** Everything a block becomes, in the order it is written. */
 async function blockChildren(
   docx: Docx,
@@ -381,7 +521,7 @@ async function blockChildren(
 
   switch (block.kind) {
     case 'text':
-      return [new docx.Paragraph({ children: lineRuns(docx, block.text, run), spacing: { after: 120 } })]
+      return proseChildren(docx, block.text, options)
     case 'rich':
       return [
         new docx.Paragraph({
@@ -390,9 +530,9 @@ async function blockChildren(
         }),
       ]
     case 'markdown':
-      return [new docx.Paragraph({ children: lineRuns(docx, block.source, run), spacing: { after: 120 } })]
+      return proseChildren(docx, block.source, options)
     case 'heading': {
-      const title = new docx.TextRun({ text: block.text })
+      const title = new docx.TextRun({ text: inlinePlain(block.text) })
       return [
         new docx.Paragraph({
           children: anchorId ? [new docx.Bookmark({ id: anchorId, children: [title] })] : [title],
@@ -404,7 +544,7 @@ async function blockChildren(
       return block.items.map(
         (item, index) =>
           new docx.Paragraph({
-            children: lineRuns(docx, item, run),
+            children: inlineChildren(docx, item, options),
             ...(block.ordered
               ? { numbering: { reference: 'pp-ordered', level: 0 } }
               : { bullet: { level: 0 } }),
@@ -416,7 +556,7 @@ async function blockChildren(
     case 'blockquote':
       return [
         new docx.Paragraph({
-          children: lineRuns(docx, block.text, { ...run, italics: true }),
+          children: inlineChildren(docx, block.text, options, { italics: true }),
           indent: { left: 240 },
           border: { left: { style: docx.BorderStyle.SINGLE, size: 12, color: ACCENT, space: 8 } },
           spacing: { before: 120, after: 120 },
@@ -571,7 +711,7 @@ function tocParagraphs(docx: Docx, options: DocumentExportOptions, document: Loc
       spacing: { before: 240, after: 120 },
     }),
   ]
-  for (const entry of tocFor(document)) {
+  for (const entry of tocFor(document, options)) {
     out.push(
       new docx.Paragraph({
         children: [
@@ -600,7 +740,7 @@ function metadataTable(docx: Docx, options: DocumentExportOptions, document: Loc
   const run = bodyRun(options)
   const border = { style: docx.BorderStyle.SINGLE, size: 2, color: RULE }
   return new docx.Table({
-    rows: metadataRows(document, exportedAt).map(
+    rows: metadataRows(document, exportedAt, options).map(
       (row) =>
         new docx.TableRow({
           children: [
@@ -654,12 +794,13 @@ const docxExporter: BlobExporter = async (document, options) => {
   if (options.includeMetadata) children.push(metadataTable(docx, options, document, exportedAt))
   if (options.includeToc) children.push(...tocParagraphs(docx, options, document))
 
-  for (const [index, message] of orderedMessages(document).entries()) {
-    const turn = index + 1
+  const view = exportView(document, options)
+
+  for (const { message, turn, content } of view.turns) {
     children.push(
       speakerParagraph(docx, message.role, turn, message.timestamp, options, turnAnchor(turn)),
     )
-    for (const [blockIndex, block] of message.content.entries()) {
+    for (const [blockIndex, block] of content.entries()) {
       children.push(
         ...(await blockChildren(
           docx,
@@ -671,12 +812,29 @@ const docxExporter: BlobExporter = async (document, options) => {
     }
   }
 
+  if (tracesAreHidden(view)) {
+    children.push(
+      new docx.Paragraph({
+        children: [
+          new docx.TextRun({
+            text: TRACES_HIDDEN_NOTE,
+            italics: true,
+            font: FAMILY[options.fontFamily],
+            size: BODY_HALF_POINTS[options.fontScale] - 2,
+            color: MUTED,
+          }),
+        ],
+        spacing: { before: 240 },
+      }),
+    )
+  }
+
   if (options.includePreservationNotes) {
     children.push(
       new docx.Paragraph({
         children: [
           new docx.TextRun({
-            text: preservationStatement(document),
+            text: preservationStatement(document, options),
             italics: true,
             font: FAMILY[options.fontFamily],
             size: BODY_HALF_POINTS[options.fontScale] - 2,

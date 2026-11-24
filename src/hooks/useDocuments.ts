@@ -6,11 +6,13 @@ import type {
   DerivedDocumentInput,
   DocumentContent,
   DocumentDraft,
+  ImportedDocumentInput,
   RestoreStrategy,
 } from '@/services/documentService'
 import {
   createDerivedDocument,
   createDocument,
+  createImportedDocument,
   deleteDocument,
   deleteEverything,
   duplicateDocument,
@@ -118,6 +120,14 @@ export function useDocuments() {
 
   const create = useCallback((draft: DocumentDraft) => run(() => createDocument(draft)), [run])
 
+  /** The write that keeps blocks: an import, or the sample thread. The
+   *  composer's `create` flattens a code block to a line of text, and
+   *  nothing that already has structure should go through it. */
+  const createImported = useCallback(
+    (input: ImportedDocumentInput) => run(() => createImportedDocument(input)),
+    [run],
+  )
+
   const update = useCallback(
     (id: string, draft: DocumentDraft) => run(() => updateDocument(id, draft)),
     [run],
@@ -164,6 +174,7 @@ export function useDocuments() {
     problem,
     dismissProblem: () => setProblem(null),
     create,
+    createImported,
     update,
     createDerived,
     saveContent,

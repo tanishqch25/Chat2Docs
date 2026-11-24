@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, Database, Plus, Search, Trash } from 'lucide-react'
+import { ArrowRight, Database, Plus, Search, Sparkles, Trash } from 'lucide-react'
 
 import { ConfirmDialog } from '@/components/documents/confirm-dialog'
 import { DataLossNotice } from '@/components/documents/data-loss-notice'
@@ -41,9 +41,11 @@ const plural = (value: number, noun: string) => `${value} ${noun}${value === 1 ?
  *
  * Everything on this page is true of the browser running it: the figures
  * come from the stored records, the counts come from the store, and an empty
- * library is shown as empty. Nothing is seeded, and no control is rendered
- * unless it does something — which is also why export is disabled rather
- * than decorative when there is nothing to export.
+ * library is shown as empty. Nothing arrives here by itself — a document gets
+ * in because the reader imported one, wrote one, restored a backup, or asked
+ * for the sample thread — and no control is rendered unless it does
+ * something, which is also why export is disabled rather than decorative when
+ * there is nothing to export.
  *
  * The one file input lives here rather than inside the panel that mentions
  * it, because both the panel and the empty library need the same picker.
@@ -63,7 +65,6 @@ function DocumentsPage() {
   const [query, setQuery] = React.useState('')
   const [filter, setFilter] = React.useState<Filter>('all')
   const [composer, setComposer] = React.useState(false)
-  const [inspecting, setInspecting] = React.useState<LocalDocument | null>(null)
   const [confirming, setConfirming] = React.useState<
     { kind: 'one'; id: string } | { kind: 'all' } | null
   >(null)
@@ -81,6 +82,28 @@ function DocumentsPage() {
   React.useEffect(() => {
     if (typeof imported === 'number') navigate('/documents', { replace: true, state: null })
   }, [imported, navigate])
+
+  /** A document opened from the search palette arrives as `?doc=<id>`, and
+   *  the address is worth keeping while it is open: reloading the page
+   *  brings the same conversation back. Closing drops it again, so a stale
+   *  query never reopens a panel the reader already dismissed. Keeping the
+   *  identifier in the address rather than in a second piece of state is also
+   *  what lets Back close the panel, and lets a reload prove what was saved. */
+  const openId = React.useMemo(
+    () => new URLSearchParams(location.search).get('doc'),
+    [location.search],
+  )
+
+  const inspecting = openId ? (documents.find((record) => record.id === openId) ?? null) : null
+
+  /** The address names a document that is not here — deleted from another
+   *  tab, or typed in. Said out loud rather than answered with a blank. */
+  const missingId = openId && status === 'ready' && !inspecting ? openId : null
+
+  const openDetail = (record: LocalDocument) =>
+    navigate(`/documents?doc=${encodeURIComponent(record.id)}`)
+
+  const closeDetail = () => navigate('/documents', { replace: true })
 
   const settle = React.useCallback(
     async <T,>(action: () => Promise<T | null>): Promise<T | null> => {
@@ -102,6 +125,28 @@ function DocumentsPage() {
     if (!saved) return
     setComposer(false)
     setNotice(`Saved “${saved.title}” to this browser.`)
+  }
+
+  /** One click, one real thread. Written as blocks through the same door an
+   *  import uses, so the sample is not a picture of a document but an
+   *  ordinary record: editable, searchable, exportable, deletable.
+   *
+   *  The thread itself is a few kilobytes of prose that only matters once a
+   *  reader asks for it, so it arrives on the click rather than in the
+   *  bundle that opens the library. */
+  const loadSample = async () => {
+    const thread = await import('@/lib/sampleConversation').catch(() => null)
+    if (!thread) {
+      setNotice(
+        'The sample thread did not arrive. It is fetched when asked for rather than carried with the library, and this browser refused the download — an import or a pasted conversation works without it.',
+      )
+      return
+    }
+    const saved = await settle(() => library.createImported(thread.buildSampleConversation()))
+    if (!saved) return
+    setNotice(
+      `Loaded the sample thread — ${plural(saved.messageCount, 'message')} with code, a comparison table and a typeset formula. It is an ordinary document: edit it, export it, or delete it.`,
+    )
   }
 
   const exportLibrary = () => {
@@ -143,7 +188,7 @@ function DocumentsPage() {
         : (await settle(() => library.remove(target.id))) !== null
     if (!done) return
     setConfirming(null)
-    setInspecting(null)
+    closeDetail()
     setNotice(
       target.kind === 'all'
         ? 'This browser holds no PromptPaper documents now.'
@@ -182,6 +227,15 @@ function DocumentsPage() {
             Import a conversation
             <ArrowRight aria-hidden className="size-4" />
           </Link>
+          {/* Under twenty documents the library is still small enough that a
+              thread to try the other surfaces on is worth offering without
+              being asked for. */}
+          {documents.length < 20 ? (
+            <Button variant="ghost" onClick={() => void loadSample()} disabled={blocked || busy}>
+              <Sparkles aria-hidden className="size-4" />
+              Load sample
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -204,6 +258,22 @@ function DocumentsPage() {
         >
           {notice}
         </p>
+      ) : null}
+
+      {missingId ? (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-4 rounded-product border border-border bg-input p-5"
+        >
+          <p className="min-w-0 flex-1 text-body text-foreground">
+            No document with the id <span className="font-mono text-body-sm">{missingId}</span> is
+            stored in this browser. It was probably deleted, or the address came from somewhere
+            else.
+          </p>
+          <Button variant="ghost" size="sm" onClick={closeDetail}>
+            Back to the library
+          </Button>
+        </div>
       ) : null}
 
       {blocked ? (
@@ -315,14 +385,21 @@ function DocumentsPage() {
               <div className="flex flex-col items-start gap-5 rounded-card border border-border bg-card p-8 shadow-card">
                 <h3 className="text-subheading font-semibold text-foreground">0 documents</h3>
                 <p className="max-w-[58ch] text-body text-muted">
-                  Nothing has been stored in this browser yet. The library stays empty until you
-                  bring something in — PromptPaper does not fill it with examples.
+                  Nothing has been stored in this browser yet, and nothing will be until you bring
+                  something in or ask for the sample. One click on either, and the library is a
+                  library.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link to="/import" className={buttonVariants({})}>
                     Import a conversation
                     <ArrowRight aria-hidden className="size-4" />
                   </Link>
+                  {/* The whole point of the sample is that the next three
+                      buttons on this page stop being hypothetical. */}
+                  <Button variant="outline" onClick={() => void loadSample()} disabled={busy}>
+                    <Sparkles aria-hidden className="size-4" />
+                    Load Sample Thread
+                  </Button>
                   <Button variant="outline" onClick={() => setComposer(true)}>
                     <Plus aria-hidden className="size-4" />
                     New document
@@ -356,7 +433,7 @@ function DocumentsPage() {
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <button
                         type="button"
-                        onClick={() => setInspecting(record)}
+                        onClick={() => openDetail(record)}
                         className="truncate text-left text-subheading font-semibold text-foreground transition-colors hover:text-signal-blue"
                       >
                         {record.title}
@@ -375,7 +452,7 @@ function DocumentsPage() {
                         variant="outline"
                         size="sm"
                         aria-label={`View ${record.title}`}
-                        onClick={() => setInspecting(record)}
+                        onClick={() => openDetail(record)}
                       >
                         View
                       </Button>
@@ -429,7 +506,7 @@ function DocumentsPage() {
       {inspecting ? (
         <DocumentDetail
           document={inspecting}
-          onClose={() => setInspecting(null)}
+          onClose={closeDetail}
           onDelete={() => setConfirming({ kind: 'one', id: inspecting.id })}
         />
       ) : null}

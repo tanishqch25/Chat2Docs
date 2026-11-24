@@ -1,10 +1,10 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
-/* The formulas in a math block are typeset here, and the editor's own
-   surface is written here too — both in this route's chunk, so a visitor who
-   never opens the editor downloads neither. */
-import 'katex/dist/katex.min.css'
+/* The editor's own surface — the prose rules TipTap's content is drawn with.
+   KaTeX's stylesheet comes with the app shell instead of here, because the
+   library, the document modes and the export preview typeset the same math
+   blocks and all of them need it. */
 import '@/styles/editor.css'
 
 import { Container } from '@/components/layout/container'

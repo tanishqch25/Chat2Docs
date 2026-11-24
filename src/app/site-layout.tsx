@@ -32,6 +32,56 @@ function useHashScroll() {
 }
 
 /**
+ * The whole site's search shortcut.
+ *
+ * It belongs to the layout rather than to the header, because the header is
+ * not on `/` — the landing page brings its own bar — and `Ctrl+K` has to work
+ * from wherever a reader happens to be standing. It also has to be one
+ * listener rather than one per page: two of them would both answer the same
+ * keystroke.
+ *
+ * A bare Cmd/Ctrl+K is the only thing caught. Shift or Alt alongside it means
+ * the reader is reaching for someone else's shortcut, and PromptPaper has no
+ * business taking that keystroke away.
+ */
+function useSearchHotkey(toggle: () => void) {
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.shiftKey || event.altKey) return
+      if (!(event.metaKey || event.ctrlKey)) return
+      if (event.key.toLowerCase() !== 'k') return
+      // Without this the browser opens its own address-bar search instead,
+      // which is the shortcut every palette of this kind competes with.
+      event.preventDefault()
+      toggle()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [toggle])
+}
+
+/** The palette is the one piece of the shell loaded on demand: searching a
+ *  library is something a returning reader does, not what brings a first
+ *  visitor to the landing page, and keeping it out of the entry chunk is what
+ *  holds that chunk under its size budget.
+ *
+ *  Its chunk is asked for as the shell settles rather than when the key is
+ *  pressed, because a shortcut that fetches and then renders makes the reader
+ *  wait on a network round trip for a panel they already called. */
+const SearchPalette = React.lazy(() =>
+  import('@/components/search/search-palette').then((module) => ({
+    default: module.SearchPalette,
+  })),
+)
+
+function useWarmSearchPalette() {
+  React.useEffect(() => {
+    void import('@/components/search/search-palette')
+  }, [])
+}
+
+/**
  * One GridPulse for the whole site, mounted here rather than per section:
  * the layer is the height of the document, so the grid is continuous from
  * the hero to the footer — and continuous again on /documents, since every
@@ -61,6 +111,14 @@ function SiteLayout() {
   const { pathname } = useLocation()
   const isLanding = pathname === '/'
 
+  // One palette for the site, mounted here rather than per page: it opens on
+  // a keystroke that works on `/` too, and a document found from it is a
+  // route change, not a page this layout has to know about.
+  const [searching, setSearching] = React.useState(false)
+  const toggleSearch = React.useCallback(() => setSearching((open) => !open), [])
+  useSearchHotkey(toggleSearch)
+  useWarmSearchPalette()
+
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
       <GridPulse
@@ -73,7 +131,7 @@ function SiteLayout() {
           <Outlet />
         ) : (
           <>
-            <SiteHeader />
+            <SiteHeader onSearch={() => setSearching(true)} />
             <main className="flex-1">
               <Outlet />
             </main>
@@ -81,6 +139,14 @@ function SiteLayout() {
           </>
         )}
       </div>
+
+      {searching ? (
+        // The chunk is asked for when the shell settles, so on a normal
+        // connection it is already here by the time the key is pressed.
+        <React.Suspense fallback={null}>
+          <SearchPalette onClose={() => setSearching(false)} />
+        </React.Suspense>
+      ) : null}
     </div>
   )
 }

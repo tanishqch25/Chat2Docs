@@ -5,7 +5,9 @@ import { SiteLayout } from '@/app/site-layout'
 import { Container } from '@/components/layout/container'
 import { ComingSoonPage } from '@/pages/coming-soon-page'
 import { DocumentsPage } from '@/pages/documents-page'
-import { ImportPage } from '@/pages/import-page'
+const ImportPage = React.lazy(() =>
+  import('@/pages/import-page').then((module) => ({ default: module.ImportPage })),
+)
 import { LandingPage } from '@/pages/landing-page'
 
 /**
@@ -92,7 +94,14 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'documents', element: <DocumentsPage /> },
-      { path: 'import', element: <ImportPage /> },
+      {
+        path: 'import',
+        element: (
+          <React.Suspense fallback={<ChunkLoading message="Opening the importer…" />}>
+            <ImportPage />
+          </React.Suspense>
+        ),
+      },
       {
         path: 'export/:documentId',
         element: (

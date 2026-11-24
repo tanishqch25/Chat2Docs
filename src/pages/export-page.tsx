@@ -2,10 +2,10 @@ import * as React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, FileText } from 'lucide-react'
 
-/* Typesetting for the preview's formulas, in this route's own chunk: the
-   standalone .html file carries its copy of the same faces instead, so
-   neither surface asks a network for a font. */
-import 'katex/dist/katex.min.css'
+/* The page-sized document the preview draws. KaTeX's stylesheet arrives with
+   the app shell now — see the note in `main.tsx` — because the library and
+   the editor typeset the same blocks; only the standalone .html export keeps
+   its own copy of the faces, inlined, so a downloaded file needs no origin. */
 import '@/styles/export.css'
 
 import { DocumentSheet } from '@/components/export/document-sheet'

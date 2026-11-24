@@ -7,10 +7,12 @@ import {
   FONT_SCALE_LABEL,
   PAGE_SIZE_LABEL,
   THEME_LABEL,
+  TOC_STYLE_LABEL,
   type DocumentExportOptions,
   type FontFamily,
   type FontScale,
   type PageSize,
+  type TocStyle,
 } from '@/types/export'
 
 /**
@@ -44,12 +46,12 @@ const TOGGLES: Toggle[] = [
   {
     key: 'includeToc',
     label: 'Table of contents',
-    hint: 'Every turn, with the headings inside it — clickable in the preview, the HTML and the DOCX.',
+    hint: 'The section topics and the questions asked, or every turn — clickable in the preview, the HTML and the DOCX.',
   },
   {
     key: 'includeMetadata',
     label: 'Metadata header',
-    hint: 'Source, mode, message count, stored size, and when it was exported.',
+    hint: 'Source, mode, how many messages are on the page, and when it was exported.',
   },
   {
     key: 'includeRoleBadges',
@@ -104,6 +106,7 @@ const PAGE_SIZES: readonly PageSize[] = ['a4', 'letter']
 const THEMES = ['light', 'dark'] as const
 const FAMILIES: readonly FontFamily[] = ['sans', 'serif', 'mono']
 const SCALES: readonly FontScale[] = ['compact', 'standard', 'comfortable']
+const TOC_STYLES: readonly TocStyle[] = ['topics', 'all-turns', 'none']
 
 function isDefault(options: DocumentExportOptions): boolean {
   return (
@@ -161,6 +164,33 @@ function ExportControls({ options, onChange }: ExportControlsProps) {
             </span>
           </label>
         ))}
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 accent-signal-blue"
+            checked={!options.hideSystemAndToolTraces}
+            onChange={(event) => onChange({ hideSystemAndToolTraces: !event.target.checked })}
+          />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-body-sm font-medium text-foreground">
+              Include system &amp; tool traces
+            </span>
+            <span className="text-caption text-muted">
+              Model reasoning, redacted plugin output and other turns the provider wrote to itself.
+              Hidden by default; nothing is deleted — switching this on shows exactly what was
+              imported.
+            </span>
+          </span>
+        </label>
+        {options.includeToc ? (
+          <OptionGroup
+            label="Contents list"
+            value={options.tocStyle}
+            values={TOC_STYLES}
+            labels={TOC_STYLE_LABEL}
+            onSelect={(tocStyle) => onChange({ tocStyle })}
+          />
+        ) : null}
       </fieldset>
 
       {isDefault(options) ? null : (

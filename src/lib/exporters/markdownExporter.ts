@@ -1,13 +1,16 @@
 import { formatDateTime } from '@/lib/format'
 import { isFollowableHref } from '@/lib/links'
 import { LINE_BREAK } from '@/lib/editor/inline'
+import { tokenizeInline, type InlineToken } from '@/lib/parsers/inlineScanner'
 import {
   SPEAKER_LABEL,
+  TRACES_HIDDEN_NOTE,
+  exportView,
   headingAnchor,
   metadataRows,
-  orderedMessages,
   preservationStatement,
   tocFor,
+  tracesAreHidden,
   turnAnchor,
 } from '@/lib/exporters/shared'
 import type { ContentBlock, InlineRun } from '@/types/conversation'
@@ -23,6 +26,12 @@ import type { BlobExporter, DocumentExportOptions } from '@/types/export'
  * for the file to still parse — a pipe inside a table cell, and a code
  * fence longer than any run of backticks inside the code — are the only
  * places it happens.
+ *
+ * Marks that arrived already written inside a paragraph stay marks: a
+ * `**bold**` the site gave us is the same instruction a Markdown reader
+ * would have typed, and a formula in ChatGPT's escaped brackets is the same
+ * formula in the `$$` every tool knows. What the file does not carry is the
+ * markup only one site understands.
  */
 
 /** A speaker header, or a numbered turn when the badges are switched off.
@@ -81,22 +90,89 @@ function renderRuns(runs: InlineRun[]): string {
     .join('')
 }
 
+/**
+ * One piece of the inline scan, in the Markdown a reader's own tools parse.
+ *
+ * The marks a paragraph already carried keep their meaning; the ones only
+ * the site that wrote them understood are translated into it: an escaped
+ * bracket pair becomes `$$`, a badge becomes bold words, a divider becomes a
+ * rule, and an illustration the page drew from a query says that query.
+ */
+const DIVIDER = '\n\n---\n\n'
+
+function renderToken(token: InlineToken): string {
+  switch (token.kind) {
+    case 'text':
+      return token.text
+    case 'bold':
+    case 'badge':
+      return `**${token.text}**`
+    case 'italic':
+      return `_${token.text}_`
+    case 'code':
+      return inlineCode(token.text)
+    case 'cite':
+      return token.href && isFollowableHref(token.href)
+        ? `[${token.text}](${token.href.trim()})`
+        : `**${token.text}**`
+    case 'illustration':
+      return `*[Illustration: ${token.text}]*`
+    case 'math':
+      return token.display
+        ? `$$\n${token.expression}\n$$`
+        : `$${token.expression}$`
+    case 'link':
+      return isFollowableHref(token.href)
+        ? `[${token.text || token.href}](${token.href.trim()})`
+        : `${token.text || token.href} (address not followed by a browser: ${token.href})`
+    case 'divider':
+      return '\n\n---\n\n'
+  }
+}
+
+const renderInline = (source: string): string => {
+  const pieces = tokenizeInline(source).map(renderToken)
+  // A message that is nothing but a rule is its own block, and the block
+  // joiner already puts a blank line around it.
+  if (pieces.length === 1 && pieces[0] === DIVIDER) return '---'
+
+  let out = ''
+  for (const piece of pieces) {
+    if (piece === DIVIDER) {
+      // One rule, one blank line either side: the paragraph's own breaks
+      // are already inside the pieces on either side of it.
+      out = `${out.trimEnd()}${DIVIDER}`
+      continue
+    }
+    out += out.endsWith('\n') ? piece.replace(/^\n+/, '') : piece
+  }
+  return out
+}
+
+/** A line of a list or a table may not hold a block rule or a newline. */
+const renderInlineFlat = (source: string): string =>
+  renderInline(source)
+    .replace(/\n+---\n+/g, ' --- ')
+    .replace(/\n+/g, ' ')
+
 function renderBlock(block: ContentBlock, options: DocumentExportOptions): string {
   switch (block.kind) {
     case 'text':
-      return block.text
+      return renderInline(block.text)
     case 'rich':
       return renderRuns(block.runs)
     case 'markdown':
-      return block.source
+      return renderInline(block.source)
     case 'heading':
-      return `${'#'.repeat(block.level)} ${block.text}`
+      return `${'#'.repeat(block.level)} ${renderInlineFlat(block.text)}`
     case 'list':
       return block.items
-        .map((item, index) => `${block.ordered ? `${index + 1}.` : '-'} ${item.replace(/\n/g, '\n  ')}`)
+        .map((item, index) =>
+          `${block.ordered ? `${index + 1}.` : '-'} ${renderInlineFlat(item).replace(/\n/g, '\n  ')}`,
+        )
         .join('\n')
     case 'blockquote':
-      return block.text
+      return renderInline(block.text)
         .split('\n')
         .map((line) => `> ${line}`)
         .join('\n')
@@ -108,10 +184,13 @@ function renderBlock(block: ContentBlock, options: DocumentExportOptions): strin
       return `${fence}${block.language ?? ''}\n${block.code}\n${fence}${caption ? `\n\n*${caption}*` : ''}`
     }
     case 'table': {
-      const head = `| ${block.headers.map(cell).join(' | ')} |`
+      const head = `| ${block.headers.map((header) => cell(renderInlineFlat(header))).join(' | ')} |`
       const rule = `| ${block.headers.map(() => '---').join(' | ')} |`
       const body = block.rows
-        .map((row) => `| ${block.headers.map((_, i) => cell(row[i] ?? '')).join(' | ')} |`)
+        .map(
+          (row) =>
+            `| ${block.headers.map((_, i) => cell(renderInlineFlat(row[i] ?? ''))).join(' | ')} |`,
+        )
         .join('\n')
       return [head, rule, body, block.caption ? `\n*${block.caption}*` : '']
         .filter(Boolean)
@@ -150,35 +229,40 @@ const linkLabel = (value: string) => value.replace(/([[\]])/g, '\\$1')
 
 const markdownExporter: BlobExporter = async (document, options) => {
   const now = new Date()
+  const view = exportView(document, options)
   const out: string[] = [`# ${document.title}`, '']
 
   if (options.includeMetadata) {
-    for (const row of metadataRows(document, now)) out.push(`**${row.label}:** ${row.value}  `)
+    for (const row of metadataRows(document, now, options)) out.push(`**${row.label}:** ${row.value}  `)
     out.push('')
   }
 
-  if (options.includeToc) {
+  const entries = tocFor(document, options)
+  if (entries.length > 0) {
     out.push('## Contents', '')
-    for (const entry of tocFor(document)) {
+    for (const entry of entries) {
       out.push(`${entry.level === 1 ? '- ' : '  - '}[${linkLabel(entry.label)}](#${entry.id})`)
     }
     out.push('')
   }
 
-  orderedMessages(document).forEach((message, index) => {
-    const turn = index + 1
+  for (const { message, content, turn } of view.turns) {
     out.push(`<a id="${turnAnchor(turn)}"></a>`, '')
     out.push(speakerHeading(message.role, turn, message.timestamp, options), '')
-    message.content.forEach((block, blockIndex) => {
+    content.forEach((block, blockIndex) => {
       if (block.kind === 'heading') {
         out.push(`<a id="${headingAnchor(turn, blockIndex)}"></a>`, '')
       }
       out.push(renderBlock(block, options), '')
     })
-  })
+  }
+
+  if (tracesAreHidden(view)) {
+    out.push(`> ${TRACES_HIDDEN_NOTE}`, '')
+  }
 
   if (options.includePreservationNotes) {
-    out.push('---', '', `> ${preservationStatement(document)}`, '')
+    out.push('---', '', `> ${preservationStatement(document, options)}`, '')
   }
 
   return new Blob([out.join('\n')], { type: 'text/markdown;charset=utf-8' })

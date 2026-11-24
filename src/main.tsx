@@ -19,6 +19,15 @@ import '@fontsource/dm-mono/latin-500.css'
 
 import './index.css'
 import './styles/landing.css'
+
+/* KaTeX's stylesheet, and the faces it names, are loaded once for the whole
+   app. Typesetting happens wherever a math block is drawn — the library's
+   detail view, the editor, the document modes — not only in the export
+   studio, and a formula rendered without these rules is a formula shown as
+   badly spaced letters. The runtime that writes the markup stays out of this
+   bundle: see the note in `components/documents/block-view.tsx`. */
+import 'katex/dist/katex.min.css'
+
 import { AppRouter } from '@/app/router'
 
 const rootElement = document.getElementById('root')

@@ -19,6 +19,9 @@ const UNORDERED = /^([ \t]*)[-*+][ \t]+(.*)$/
 const ORDERED = /^([ \t]*)\d+[.)][ \t]+(.*)$/
 const TABLE_SEPARATOR = /^[ \t]*\|?[ \t]*:?-{1,}:?[ \t]*(\|[ \t]*:?-{1,}:?[ \t]*)*\|?[ \t]*$/
 const MATH_FENCE = /^[ \t]*(\$\$+)(.*)$/
+// The other way a page writes a display equation: the escaped bracket pair,
+// usually with the whole formula on the line that opens it.
+const BRACKET_OPEN = /^[ \t]*\\\[(.*)$/
 
 const isBlank = (line: string) => line.trim().length === 0
 
@@ -72,6 +75,39 @@ export function extractBlocks(text: string): ContentBlock[] {
         code: collected.join('\n'),
         language: (info ?? '').trim().split(/\s+/)[0] || 'text',
       })
+      continue
+    }
+
+    const bracket = BRACKET_OPEN.exec(line)
+    if (bracket) {
+      const rest = bracket[1]!
+      const closedSameLine = rest.trimEnd().endsWith('\\]')
+      const tail = closedSameLine ? rest.trim().slice(0, -2) : rest
+      const collected = tail.trim().length > 0 ? [tail] : []
+      index += 1
+      if (!closedSameLine) {
+        // The formula runs to its closing pair, wherever that is. A page
+        // that never closes it keeps the rest of the message as the
+        // equation rather than guessing it was prose.
+        while (index < lines.length) {
+          const next = lines[index]!
+          index += 1
+          if (next.trimEnd().endsWith('\\]')) {
+            const inner = next.trim().slice(0, -2)
+            if (inner.trim().length > 0) collected.push(inner)
+            break
+          }
+          collected.push(next)
+        }
+      }
+      if (collected.length === 0) {
+        // `\[\]` is two delimiters around nothing, so it stays the two
+        // characters it is rather than becoming an empty equation.
+        paragraph.push(line)
+        continue
+      }
+      flush()
+      blocks.push({ kind: 'math', expression: collected.join('\n').trim(), display: true })
       continue
     }
 
